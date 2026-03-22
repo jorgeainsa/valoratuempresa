@@ -164,6 +164,9 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
 .anim{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}.anim.vis{opacity:1;transform:translateY(0)}
 .fade-in{animation:fadeUp .4s ease forwards}
 
+.pdf-only{display:none !important}
+@media print{.pdf-only{display:block !important}.no-pdf{display:none !important}}
+
 .legal-content h2{font-size:18px;font-weight:600;color:var(--ink);margin:28px 0 12px;padding-top:20px;border-top:1px solid var(--brd)}
 .legal-content h2:first-child{border-top:none;margin-top:0;padding-top:0}
 .legal-content p{font-size:15px;color:var(--ink2);line-height:1.7;margin-bottom:10px}

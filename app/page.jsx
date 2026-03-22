@@ -212,10 +212,43 @@ function getQualExplanation(qId,idx){
 
 function StepResults({data,onBack,onHome}){
   const[plan,setPlan]=useState("free");
+  const[pdfLoading,setPdfLoading]=useState(false);
+  const pdfRef=useRef(null);
   const r=runValuation(data);if(!r)return<p>Error en los datos. Vuelve atrás para corregir.</p>;
   const scoreColor=r.qualScore>70?"var(--green)":r.qualScore>40?"var(--blue)":"var(--amber)";
   const qualDetails=QUAL_QUESTIONS.map(q=>{const val=(data.qualAnswers||{})[q.id];const score=val!==undefined?((val+1)/5)*100:0;return{id:q.id,label:q.label,score:Math.round(score),color:score>=70?"var(--green)":score>=40?"var(--blue)":"var(--amber)",optionIndex:val}});
   const fmtPct=(n)=>(n*100).toFixed(1).replace(".",",")+"%";
+
+  const generatePDF=async()=>{
+    if(!pdfRef.current)return;
+    setPdfLoading(true);
+    const loadAndGenerate=()=>{
+      const el=pdfRef.current;
+      const pdfEls=el.querySelectorAll(".pdf-only");
+      const noPdfEls=el.querySelectorAll(".no-pdf");
+      pdfEls.forEach(e=>e.style.display="block");
+      noPdfEls.forEach(e=>e.style.display="none");
+      const opt={
+        margin:[10,12,10,12],
+        filename:`Valoracion_${(data.name||"empresa").replace(/[^a-zA-Z0-9]/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`,
+        image:{type:"jpeg",quality:0.95},
+        html2canvas:{scale:2,useCORS:true,letterRendering:true,backgroundColor:"#ffffff"},
+        jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
+        pagebreak:{mode:["avoid-all","css","legacy"]}
+      };
+      window.html2pdf().set(opt).from(el).save().then(()=>{
+        pdfEls.forEach(e=>e.style.display="none");
+        noPdfEls.forEach(e=>e.style.display="");
+        setPdfLoading(false);
+      }).catch(()=>{
+        pdfEls.forEach(e=>e.style.display="none");
+        noPdfEls.forEach(e=>e.style.display="");
+        setPdfLoading(false);
+      });
+    };
+    if(window.html2pdf){loadAndGenerate()}
+    else{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";s.onload=loadAndGenerate;s.onerror=()=>setPdfLoading(false);document.head.appendChild(s)}
+  };
 
   return<div className="fade-in">
     <h2 className="app-title">Resultado de la valoración</h2>
@@ -256,11 +289,27 @@ function StepResults({data,onBack,onHome}){
 
     {/* ESSENTIAL PLAN - full content */}
     {plan==="essential"&&<>
-      {/* Success banner */}
-      <div style={{background:"var(--greenS)",border:"1.5px solid #b8e6c8",borderRadius:"var(--rs)",padding:"16px 20px",marginBottom:24,display:"flex",alignItems:"center",gap:12}}>
+      {/* Success banner - not in PDF */}
+      <div style={{background:"var(--greenS)",border:"1.5px solid #b8e6c8",borderRadius:"var(--rs)",padding:"16px 20px",marginBottom:24,display:"flex",alignItems:"center",gap:12}} className="no-pdf">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M16.667 5L7.5 14.167 3.333 10" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         <div><p style={{fontSize:15,fontWeight:600,color:"var(--green)",margin:0}}>Informe Esencial desbloqueado</p><p style={{fontSize:13,color:"var(--ink3)",margin:0}}>Enviado a {data.contactEmail||"tu email"}</p></div>
       </div>
+
+      {/* PDF Content wrapper */}
+      <div ref={pdfRef}>
+        {/* PDF Header - only visible in PDF */}
+        <div className="pdf-only" style={{display:"none",marginBottom:24,paddingBottom:16,borderBottom:"2px solid #1a56db"}}>
+          <div style={{fontSize:20,fontWeight:800,color:"#0b1222",marginBottom:4}}>valora<span style={{color:"#1a56db"}}>tuempresa</span>.es</div>
+          <div style={{fontSize:24,fontWeight:600,color:"#0b1222",fontFamily:"'Instrument Serif',serif",marginBottom:4}}>Informe de Valoración Esencial</div>
+          <div style={{fontSize:13,color:"#6b7a96"}}>{data.name||"Empresa"} · {r.sector.label} · {new Date().toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"})}</div>
+        </div>
+
+        {/* Valuation summary for PDF */}
+        <div className="pdf-only" style={{display:"none",textAlign:"center",padding:"20px",background:"#0f1a2e",borderRadius:12,marginBottom:20,color:"#fff"}}>
+          <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:2,color:"rgba(255,255,255,0.4)",marginBottom:8}}>Valor de las participaciones (Equity Value)</div>
+          <div style={{fontSize:36,fontWeight:700,fontFamily:"'Instrument Serif',serif"}}>{fmtM(r.eqBlended)}</div>
+          <div style={{fontSize:14,color:"rgba(255,255,255,0.5)",marginTop:6}}>Rango: {fmtM(r.eqLow)} – {fmtM(r.eqHigh)}</div>
+        </div>
 
       {/* AI Company Analysis */}
       <CompanyAnalysis data={data}/>
@@ -333,11 +382,17 @@ function StepResults({data,onBack,onHome}){
         </div>
       </div>
 
+        {/* PDF Footer */}
+        <div className="pdf-only" style={{display:"none",marginTop:24,paddingTop:12,borderTop:"1px solid #e4e8f1",fontSize:11,color:"#6b7a96",textAlign:"center"}}>
+          <p style={{margin:0}}>Informe generado por valoratuempresa.es · SP Financial Advisory LLC</p>
+          <p style={{margin:"4px 0 0"}}>Aviso legal: Esta valoración tiene carácter indicativo y orientativo. No constituye asesoramiento financiero, fiscal ni legal.</p>
+        </div>
+      </div>{/* End pdfRef */}
+
       {/* Download button */}
       <div style={{textAlign:"center",margin:"28px 0"}}>
-        <button className="btn btn-p" style={{padding:"14px 36px",fontSize:16}} onClick={()=>alert("La generación de PDF estará disponible próximamente.")}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
-          Descargar informe PDF
+        <button className="btn btn-p" style={{padding:"14px 36px",fontSize:16}} disabled={pdfLoading} onClick={generatePDF}>
+          {pdfLoading?<>Generando PDF...</>:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Descargar informe PDF</>}
         </button>
       </div>
 
