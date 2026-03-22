@@ -99,7 +99,8 @@ function Anim({children,className=""}){const ref=useRef(null);const[v,setV]=useS
 function FAQ({item}){const[open,setOpen]=useState(false);return<div className={`faq-i ${open?"open":""}`}><button className="faq-q" onClick={()=>setOpen(!open)}>{item.q}<span className="faq-tg">+</span></button>{open&&<div className="faq-a">{item.a}</div>}</div>}
 
 function EuroInput({value,onChange,placeholder,helper}){
-  return<div style={{position:"relative"}}><input type="text" inputMode="numeric" placeholder={placeholder} value={value||""} onChange={e=>{onChange(e.target.value.replace(/[^0-9]/g,""))}} style={{paddingRight:32}}/><span style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",fontSize:14,color:"var(--ink3)",fontWeight:600,pointerEvents:"none"}}>€</span></div>
+  const display=value?Number(value).toLocaleString("es-ES"):"";
+  return<div style={{position:"relative"}}><input type="text" inputMode="numeric" placeholder={placeholder} value={display} onChange={e=>{onChange(e.target.value.replace(/[^0-9]/g,""))}} style={{paddingRight:32}}/><span style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",fontSize:14,color:"var(--ink3)",fontWeight:600,pointerEvents:"none"}}>€</span></div>
 }
 
 // ─── LANDING ─────────────────────────────────────────────────
@@ -187,7 +188,7 @@ Genera JSON con: {"descripcion":"2-4 frases","historia":"2-4 frases","modelo":"2
       setLoading(false);
     }).catch(()=>{setError("Error de conexión.");setLoading(false)});
   },[]);
-  if(loading)return<div className="r-sec"><h3>Análisis de la compañía</h3><p style={{fontSize:14,color:"var(--ink3)",padding:"20px 0",textAlign:"center"}}>Analizando {data.name||"la empresa"}...</p></div>;
+  if(loading)return<div className="r-sec"><h3>Análisis de la compañía</h3><div style={{padding:"24px 0",textAlign:"center"}}><div style={{fontSize:32,marginBottom:12}}>🔍</div><p style={{fontSize:15,color:"var(--ink2)",margin:0,fontWeight:500}}>Analizando {data.name||"la empresa"}...</p><p style={{fontSize:13,color:"var(--ink3)",margin:"6px 0 0"}}>Estamos investigando el negocio, su sector y sus características para generar un análisis personalizado.</p></div></div>;
   if(error||!analysis)return<div className="r-sec"><h3>Análisis de la compañía</h3><p style={{fontSize:14,color:"var(--ink3)"}}>{error||"Análisis no disponible."}</p></div>;
   const sections=[{title:"Descripción del negocio",text:analysis.descripcion},{title:"Historia y trayectoria",text:analysis.historia},{title:"Modelo de negocio",text:analysis.modelo},{title:"Oferta de productos/servicios",text:analysis.oferta},{title:"Presencia geográfica",text:analysis.geografia},{title:"Métricas operativas clave",text:analysis.metricas}];
   return<div className="r-sec"><h3>Análisis de la compañía</h3>{sections.map((s,i)=>s.text?<div key={i} style={{marginBottom:i<sections.length-1?16:0}}><p style={{fontSize:13,fontWeight:600,color:"var(--ink)",marginBottom:3}}>{s.title}</p><p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,margin:0}}>{s.text}</p></div>:null)}</div>
@@ -315,7 +316,7 @@ function StepResults({data,onBack,onHome}){
           <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>+</span>
           <div style={{textAlign:"center",padding:"14px 22px",background:"var(--amberS)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:4}}>VP valor terminal</div><div style={{fontSize:20,fontWeight:600,color:"var(--amber)"}}>{fmtM(r.pvTerminal)}</div><div style={{fontSize:11,color:"var(--ink3)",marginTop:4}}>Año {PROJECTION_YEARS}+</div></div>
           <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>=</span>
-          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--navy)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:4}}>Valor Compañía (DCF)</div><div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{fmtM(r.evDcf)}</div></div>
+          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--navy)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:4}}>Valor Compañía (DCF)</div><div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{fmtM(r.evDcf)}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:4}}>Resultado DCF</div></div>
         </div>
       </div>
 
@@ -328,7 +329,7 @@ function StepResults({data,onBack,onHome}){
           <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>{r.dfn>0?"−":"+"}</span>
           <div style={{textAlign:"center",padding:"14px 22px",background:r.dfn>0?"var(--redS)":"var(--greenS)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:2}}>Deuda Fin. Neta</div><div style={{fontSize:20,fontWeight:600,color:r.dfn>0?"var(--red)":"var(--green)"}}>{fmtM(Math.abs(r.dfn))}</div></div>
           <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>=</span>
-          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--navy)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:2}}>Valor Participaciones</div><div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{fmtM(r.eqBlended)}</div></div>
+          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--navy)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:2}}>Valor Participaciones</div><div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{fmtM(r.eqBlended)}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2}}>Equity Value</div></div>
         </div>
       </div>
 
@@ -368,7 +369,7 @@ function ValuationApp({onHome}){
     if(step===3)return data.contactEmail&&data.contactEmail.includes("@");
     return false;
   };
-  const go=(dir)=>{setStep(s=>s+dir);topRef.current?.scrollIntoView({behavior:"smooth"})};
+  const go=(dir)=>{setStep(s=>s+dir);window.scrollTo({top:0,behavior:"smooth"})};
   return<div className="app-overlay"><div ref={topRef}/>
     <div className="app-hdr"><div className="app-hdr-inner"><div className="app-hdr-left"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span className="app-hdr-title">Herramienta de valoración</span></div><div className="app-hdr-right">Paso {step+1} de {APP_STEPS.length} · <strong>{APP_STEPS[step].label}</strong></div></div><div className="app-hdr-prog"><div className="app-hdr-bar" style={{width:`${((step+1)/APP_STEPS.length)*100}%`}}/></div></div>
     <div className="app-main">
