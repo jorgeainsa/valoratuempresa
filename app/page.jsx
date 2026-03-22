@@ -2,23 +2,23 @@
 import { useState, useEffect, useRef } from "react";
 
 const SECTORS = [
-  { id: "saas", label: "Software / SaaS", evEbitda: 12.0, evRevenue: 3.5, capexPct: 0.08, wcPct: 0.05 },
-  { id: "tech_services", label: "Servicios tecnológicos / IT", evEbitda: 9.0, evRevenue: 2.0, capexPct: 0.06, wcPct: 0.06 },
-  { id: "ecommerce", label: "E-commerce / Marketplaces", evEbitda: 10.0, evRevenue: 1.75, capexPct: 0.07, wcPct: 0.08 },
-  { id: "health", label: "Salud / Healthcare", evEbitda: 10.0, evRevenue: 2.25, capexPct: 0.06, wcPct: 0.06 },
-  { id: "education", label: "Educación / Formación", evEbitda: 8.5, evRevenue: 1.5, capexPct: 0.05, wcPct: 0.05 },
-  { id: "food", label: "Alimentación / Consumo", evEbitda: 7.5, evRevenue: 1.15, capexPct: 0.07, wcPct: 0.10 },
-  { id: "services", label: "Servicios profesionales", evEbitda: 7.0, evRevenue: 1.15, capexPct: 0.04, wcPct: 0.07 },
-  { id: "industry", label: "Industria / Manufactura", evEbitda: 6.5, evRevenue: 0.9, capexPct: 0.09, wcPct: 0.10 },
-  { id: "distribution", label: "Distribución / Logística", evEbitda: 6.5, evRevenue: 0.6, capexPct: 0.06, wcPct: 0.08 },
-  { id: "construction", label: "Construcción / Infraestructura", evEbitda: 5.5, evRevenue: 0.5, capexPct: 0.08, wcPct: 0.12 },
-  { id: "hospitality", label: "Hostelería / Turismo", evEbitda: 7.0, evRevenue: 1.15, capexPct: 0.08, wcPct: 0.06 },
-  { id: "energy", label: "Energía / Renovables", evEbitda: 8.5, evRevenue: 1.85, capexPct: 0.12, wcPct: 0.07 },
+  { id: "saas", label: "Software / SaaS", evEbitda: 12.0, evRevenue: 3.0, capexPct: 0.08, wcPct: 0.10 },
+  { id: "tech_services", label: "Servicios tecnológicos / IT", evEbitda: 9.0, evRevenue: 2.0, capexPct: 0.06, wcPct: 0.10 },
+  { id: "ecommerce", label: "E-commerce / Marketplaces", evEbitda: 7.0, evRevenue: 1.5, capexPct: 0.06, wcPct: 0.10 },
+  { id: "health", label: "Salud / Healthcare", evEbitda: 10.0, evRevenue: 2.0, capexPct: 0.07, wcPct: 0.10 },
+  { id: "education", label: "Educación / Formación", evEbitda: 8.0, evRevenue: 1.5, capexPct: 0.05, wcPct: 0.05 },
+  { id: "food", label: "Alimentación / Consumo", evEbitda: 7.0, evRevenue: 1.0, capexPct: 0.07, wcPct: 0.15 },
+  { id: "services", label: "Servicios profesionales", evEbitda: 7.0, evRevenue: 1.0, capexPct: 0.03, wcPct: 0.10 },
+  { id: "industry", label: "Industria / Manufactura", evEbitda: 7.0, evRevenue: 1.0, capexPct: 0.10, wcPct: 0.15 },
+  { id: "distribution", label: "Distribución / Logística", evEbitda: 6.5, evRevenue: 0.6, capexPct: 0.10, wcPct: 0.10 },
+  { id: "construction", label: "Construcción / Infraestructura", evEbitda: 5.5, evRevenue: 0.5, capexPct: 0.10, wcPct: 0.12 },
+  { id: "hospitality", label: "Hostelería / Turismo", evEbitda: 7.0, evRevenue: 1.0, capexPct: 0.08, wcPct: 0.06 },
+  { id: "energy", label: "Energía / Renovables", evEbitda: 8.0, evRevenue: 1.5, capexPct: 0.12, wcPct: 0.10 },
   { id: "transport", label: "Transporte", evEbitda: 5.5, evRevenue: 0.5, capexPct: 0.10, wcPct: 0.08 },
-  { id: "agro", label: "Agricultura / Agroalimentario", evEbitda: 6.5, evRevenue: 0.8, capexPct: 0.09, wcPct: 0.10 },
-  { id: "other", label: "Otro", evEbitda: 7.0, evRevenue: 1.0, capexPct: 0.07, wcPct: 0.08 },
+  { id: "agro", label: "Agricultura / Agroalimentario", evEbitda: 6.5, evRevenue: 0.8, capexPct: 0.10, wcPct: 0.12 },
+  { id: "other", label: "Otro", evEbitda: 7.0, evRevenue: 1.0, capexPct: 0.10, wcPct: 0.10 },
 ];
-const SIZE_ADJUSTMENTS = [{ max:5, adj:-0.20 },{ max:15, adj:-0.10 },{ max:30, adj:0 },{ max:50, adj:0.05 },{ max:Infinity, adj:0.10 }];
+const SIZE_ADJUSTMENTS = [{ max:5, adj:-0.30 },{ max:15, adj:-0.15 },{ max:30, adj:0 },{ max:50, adj:0.05 },{ max:Infinity, adj:0.10 }];
 const QUAL_QUESTIONS = [
   { id:"recurrence", label:"Recurrencia de ingresos", question:"¿Qué porcentaje de tus ingresos son recurrentes?", options:["<10%","10-25%","25-50%","50-75%",">75%"], weight:3 },
   { id:"concentration", label:"Concentración de clientes", question:"¿Qué % de la facturación representan tus 3 mayores clientes?", options:[">70%","50-70%","30-50%","15-30%","<15%"], weight:3 },
@@ -66,7 +66,7 @@ const FAQS=[
 function getSizeAdj(r){const m=r/1e6;for(const s of SIZE_ADJUSTMENTS)if(m<=s.max)return s.adj;return 0.10}
 function calcQS(a){let t=0,mx=0;QUAL_QUESTIONS.forEach(q=>{const v=a[q.id];if(v!==undefined)t+=(v+1)*q.weight;mx+=5*q.weight});return mx>0?Math.round((t/mx)*100):50}
 function getSP(s){if(s<=30)return 0.25;if(s<=60)return 0.50;if(s<=80)return 0.75;return 0.90}
-function getW(s){if(s<=30)return 0.155;if(s<=60)return 0.13;if(s<=80)return 0.115;return 0.105}
+function getW(s){if(s<=30)return 0.20;if(s<=60)return 0.16;if(s<=80)return 0.13;return 0.10}
 function pE(v){if(!v)return 0;return parseFloat(String(v).replace(/[.\s]/g,"").replace(",","."))||0}
 
 function runValuation(data){
@@ -88,8 +88,8 @@ function runValuation(data){
   const pvTerminal=(lastFcf*(1+TERMINAL_GROWTH)/(wacc-TERMINAL_GROWTH))/Math.pow(1+wacc,PROJECTION_YEARS);
   const evDcf=sumPvFcf+pvTerminal,eqDcf=evDcf-dfn;
   const qualMid=(evMultiples+evDcf)/2,qualAdj=qualMid*((qualScore-50)/200);
-  const evBlended=evMultiples*0.50+evDcf*0.30+(qualMid+qualAdj)*0.20,eqBlended=evBlended-dfn;
-  return{sector,rev,ebitda,dfn,qualScore,percentile,wacc,baseMultiple,sizeAdj,adjMultiple,selectedMult,evMultiples,eqMultiples,evDcf,eqDcf,cappedGrowth,evBlended,eqBlended,eqLow:Math.max(0,eqBlended*0.80),eqHigh:eqBlended*1.20,sumPvFcf,pvTerminal}
+  const evBlended=evMultiples*0.60+evDcf*0.20+(qualMid+qualAdj)*0.20,eqBlended=Math.max(0,evBlended-dfn);
+  return{sector,rev,ebitda,dfn,qualScore,percentile,wacc,baseMultiple,sizeAdj,adjMultiple,selectedMult,evMultiples,eqMultiples:Math.max(0,eqMultiples),evDcf,eqDcf:Math.max(0,eqDcf),cappedGrowth,evBlended,eqBlended,eqLow:Math.max(0,eqBlended*0.80),eqHigh:eqBlended*1.20,sumPvFcf,pvTerminal}
 }
 const fmtM=(n)=>{if(n==null||isNaN(n))return"–";if(Math.abs(n)>=1e6)return(n/1e6).toFixed(1).replace(".",",")+("M€");if(Math.abs(n)>=1e3)return Math.round(n/1e3)+"k€";return Math.round(n)+"€"};
 
@@ -163,7 +163,7 @@ function StepResults({data,onBack,onHome}){
       <div className="r-card"><div className="r-card-t">Quality Score</div><div className="r-card-v" style={{color:scoreColor}}>{r.qualScore}/100</div><div className="r-card-d">Percentil {Math.round(r.percentile*100)} del rango</div></div>
     </div>
     <div className="paywall"><h3>Desbloquea el informe completo</h3><p>Obtén el PDF profesional con el desglose por metodología, Quality Score detallado, benchmarking sectorial y recomendaciones.</p><div className="paywall-btns"><button className="pw-btn pw-btn-p" onClick={()=>alert("Estamos en fase de lanzamiento. Próximamente podrás descargar tu informe.")}>Informe Esencial · 149€ + IVA</button><button className="pw-btn pw-btn-o" onClick={()=>alert("Estamos en fase de lanzamiento. Próximamente podrás descargar tu informe.")}>Informe Profesional · 299€ + IVA</button></div></div>
-    <div className="r-sec"><h3>Desglose por metodología (vista previa)</h3><table className="m-tbl"><thead><tr><th>Método</th><th>Enterprise Value</th><th>Equity Value</th><th>Peso</th></tr></thead><tbody><tr><td>Múltiplos comparables</td><td>{fmtM(r.evMultiples)}</td><td>{fmtM(r.eqMultiples)}</td><td>50%</td></tr><tr><td>DCF simplificado</td><td>{fmtM(r.evDcf)}</td><td>{fmtM(r.eqDcf)}</td><td>30%</td></tr><tr><td>Ajuste cualitativo</td><td colSpan="2" style={{textAlign:"center"}}>Score {r.qualScore}/100</td><td>20%</td></tr><tr><td>Valoración ponderada</td><td>{fmtM(r.evBlended)}</td><td>{fmtM(r.eqBlended)}</td><td>100%</td></tr></tbody></table></div>
+    <div className="r-sec"><h3>Desglose por metodología (vista previa)</h3><table className="m-tbl"><thead><tr><th>Método</th><th>Enterprise Value</th><th>Equity Value</th><th>Peso</th></tr></thead><tbody><tr><td>Múltiplos comparables</td><td>{fmtM(r.evMultiples)}</td><td>{fmtM(r.eqMultiples)}</td><td>60%</td></tr><tr><td>DCF simplificado</td><td>{fmtM(r.evDcf)}</td><td>{fmtM(r.eqDcf)}</td><td>20%</td></tr><tr><td>Ajuste cualitativo</td><td colSpan="2" style={{textAlign:"center"}}>Score {r.qualScore}/100</td><td>20%</td></tr><tr><td>Valoración ponderada</td><td>{fmtM(r.evBlended)}</td><td>{fmtM(r.eqBlended)}</td><td>100%</td></tr></tbody></table></div>
     <div className="r-sec"><h3>Quality Score · Desglose</h3><div>{qualDetails.map((d,i)=><div className="sc-row" key={i}><span className="sc-lbl">{d.label}</span><div className="sc-bg"><div className="sc-fill" style={{width:d.score+"%",background:d.color}}/></div><span className="sc-val">{d.score}</span></div>)}</div></div>
     <div className="discl"><strong>Aviso legal:</strong> Esta valoración tiene carácter indicativo y orientativo.</div>
     <div className="btn-row"><button className="btn btn-g" onClick={onBack}>← Modificar datos</button><button className="btn btn-g" onClick={onHome}>Volver al inicio</button></div>
