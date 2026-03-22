@@ -168,7 +168,7 @@ function StepEmail({data,onChange}){
 }
 
 
-function CompanyAnalysis({data}){
+function CompanyAnalysis({data,onAnalysisReady}){
   const[analysis,setAnalysis]=useState(null);
   const[loading,setLoading]=useState(true);
   const[error,setError]=useState(null);
@@ -184,7 +184,7 @@ Genera JSON con: {"descripcion":"2-4 frases","historia":"2-4 frases","modelo":"2
     fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})})
     .then(r=>r.json()).then(d=>{
       const txt=d.content?.map(i=>i.text||"").join("")||"";
-      try{setAnalysis(JSON.parse(txt.replace(/```json|```/g,"").trim()))}catch(e){setError("No se pudo generar el análisis.")}
+      try{const parsed=JSON.parse(txt.replace(/```json|```/g,"").trim());setAnalysis(parsed);if(onAnalysisReady)onAnalysisReady(parsed)}catch(e){setError("No se pudo generar el análisis.")}
       setLoading(false);
     }).catch(()=>{setError("Error de conexión.");setLoading(false)});
   },[]);
@@ -213,42 +213,59 @@ function getQualExplanation(qId,idx){
 function StepResults({data,onBack,onHome}){
   const[plan,setPlan]=useState("free");
   const[pdfLoading,setPdfLoading]=useState(false);
+  const[companyAnalysis,setCompanyAnalysis]=useState(null);
   const pdfRef=useRef(null);
-  const r=runValuation(data);if(!r)return<p>Error en los datos. Vuelve atrás para corregir.</p>;
+  const r=runValuation(data);if(!r)return<p>Error en los datos. Vuelve atr\u00e1s para corregir.</p>;
   const scoreColor=r.qualScore>70?"var(--green)":r.qualScore>40?"var(--blue)":"var(--amber)";
   const qualDetails=QUAL_QUESTIONS.map(q=>{const val=(data.qualAnswers||{})[q.id];const score=val!==undefined?((val+1)/5)*100:0;return{id:q.id,label:q.label,score:Math.round(score),color:score>=70?"var(--green)":score>=40?"var(--blue)":"var(--amber)",optionIndex:val}});
   const fmtPct=(n)=>(n*100).toFixed(1).replace(".",",")+"%";
 
-  const generatePDF=async()=>{
-    if(!pdfRef.current)return;
+  const generatePDF=()=>{
     setPdfLoading(true);
-    const loadAndGenerate=()=>{
-      const el=pdfRef.current;
-      const pdfEls=el.querySelectorAll(".pdf-only");
-      const noPdfEls=el.querySelectorAll(".no-pdf");
-      pdfEls.forEach(e=>e.style.display="block");
-      noPdfEls.forEach(e=>e.style.display="none");
-      const opt={
-        margin:[10,12,10,12],
-        filename:`Valoracion_${(data.name||"empresa").replace(/[^a-zA-Z0-9]/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`,
-        image:{type:"jpeg",quality:0.95},
-        html2canvas:{scale:2,useCORS:true,letterRendering:true,backgroundColor:"#ffffff"},
-        jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
-        pagebreak:{mode:["avoid-all","css","legacy"]}
-      };
-      window.html2pdf().set(opt).from(el).save().then(()=>{
-        pdfEls.forEach(e=>e.style.display="none");
-        noPdfEls.forEach(e=>e.style.display="");
-        setPdfLoading(false);
-      }).catch(()=>{
-        pdfEls.forEach(e=>e.style.display="none");
-        noPdfEls.forEach(e=>e.style.display="");
-        setPdfLoading(false);
-      });
-    };
-    if(window.html2pdf){loadAndGenerate()}
-    else{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";s.onload=loadAndGenerate;s.onerror=()=>setPdfLoading(false);document.head.appendChild(s)}
+    if(window.jspdf){buildPDFDoc();return}
+    const s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    s.onload=()=>buildPDFDoc();
+    s.onerror=()=>{alert("Error cargando PDF");setPdfLoading(false)};
+    document.head.appendChild(s);
   };
+  function buildPDFDoc(){
+    const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:"mm",format:"a4"});
+    const W=210,H=297,M=18,CW=W-2*M;let y=0;
+    const NY="#0f1a2e",BL="#1a56db",GY="#6b7a96",IK="#0b1222",I2="#374259",GR="#0d7c3d",AM="#c2790e",RD="#b91c1c";
+    const bh=18,gap=8,bbW=48,sx=(W-3*bbW-2*gap)/2;
+    function ck(n){if(y+n>H-20){doc.addPage();y=20}return y}
+    function sT(t){y=ck(14);doc.setFontSize(13);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(t,M,y);y+=8;doc.setFont("helvetica","normal")}
+    function bT(t){doc.setFontSize(9.5);doc.setTextColor(I2);doc.setFont("helvetica","normal");const l=doc.splitTextToSize(t,CW);y=ck(l.length*4.5);doc.text(l,M,y);y+=l.length*4.5+2}
+    function box3(x,yy,bg,lbl,val,lc,vc){doc.setFillColor(bg);doc.roundedRect(x,yy,bbW,bh,2,2,"F");doc.setFontSize(7);doc.setTextColor(lc);doc.text(lbl,x+bbW/2,yy+6,{align:"center"});doc.setFontSize(12);doc.setTextColor(vc);doc.setFont("helvetica","bold");doc.text(val,x+bbW/2,yy+14,{align:"center"});doc.setFont("helvetica","normal")}
+    function sign(x,yy,t){doc.setFontSize(16);doc.setTextColor(GY);doc.setFont("helvetica","normal");doc.text(t,x,yy+12,{align:"center"})}
+    // Cover
+    doc.setFillColor(NY);doc.rect(0,0,W,H,"F");doc.setFontSize(16);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");doc.text("valoratuempresa.es",M,50);doc.setDrawColor(BL);doc.setLineWidth(0.8);doc.line(M,55,W-M,55);doc.setFontSize(28);doc.text("Informe de Valoraci\u00f3n",M,75);doc.setFontSize(22);doc.text("Esencial",M,87);doc.setFontSize(12);doc.setFont("helvetica","normal");doc.setTextColor("#8899bb");doc.text(data.name||"Empresa",M,110);doc.text(r.sector.label,M,118);doc.text((data.province||"Espa\u00f1a")+", "+new Date().toLocaleDateString("es-ES",{month:"long",year:"numeric"}),M,126);doc.setFontSize(9);doc.setTextColor("#556688");doc.text("Preparado por SP Financial Advisory LLC",M,H-30);doc.text("Documento confidencial",M,H-24);
+    // Page 2: Summary
+    doc.addPage();y=25;doc.setFillColor(NY);doc.roundedRect(M,y,CW,45,3,3,"F");doc.setFontSize(9);doc.setTextColor("#8899bb");doc.text("VALOR DE LAS PARTICIPACIONES (EQUITY VALUE)",W/2,y+12,{align:"center"});doc.setFontSize(26);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");doc.text(fmtM(r.eqBlended),W/2,y+28,{align:"center"});doc.setFontSize(11);doc.setFont("helvetica","normal");doc.setTextColor("#8899bb");doc.text("Rango: "+fmtM(r.eqLow)+" \u2013 "+fmtM(r.eqHigh),W/2,y+38,{align:"center"});y+=55;
+    const mt=[{l:"Valor Compa\u00f1\u00eda (EV)",v:fmtM(r.evBlended)},{l:"Deuda Financiera Neta",v:fmtM(r.dfn)},{l:"M\u00faltiplo aplicado",v:r.selectedMult.toFixed(1)+"x"},{l:"Quality Score",v:r.qualScore+"/100"}];const bw=(CW-6)/2;mt.forEach((m,i)=>{const col=i%2,row=Math.floor(i/2),bx=M+col*(bw+6),by=y+row*(bh+4);doc.setFillColor("#f0f4fa");doc.roundedRect(bx,by,bw,bh,2,2,"F");doc.setFontSize(7.5);doc.setTextColor(GY);doc.text(m.l,bx+4,by+6);doc.setFontSize(12);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(m.v,bx+4,by+14);doc.setFont("helvetica","normal")});y+=2*(bh+4)+10;
+    // Company Analysis
+    if(companyAnalysis){sT("An\u00e1lisis de la compa\u00f1\u00eda");[{t:"Descripci\u00f3n del negocio",v:companyAnalysis.descripcion},{t:"Historia y trayectoria",v:companyAnalysis.historia},{t:"Modelo de negocio",v:companyAnalysis.modelo},{t:"Oferta de productos/servicios",v:companyAnalysis.oferta},{t:"Presencia geogr\u00e1fica",v:companyAnalysis.geografia},{t:"M\u00e9tricas operativas clave",v:companyAnalysis.metricas}].forEach(f=>{if(!f.v)return;y=ck(16);doc.setFontSize(9.5);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(f.t,M,y);y+=5;doc.setFont("helvetica","normal");doc.setTextColor(I2);const l=doc.splitTextToSize(f.v,CW);y=ck(l.length*4.2);doc.text(l,M,y);y+=l.length*4.2+4})}
+    // Methodology
+    sT("Desglose por metodolog\u00eda");bT("Para determinar el valor de "+(data.name||"la empresa")+", se han aplicado dos metodolog\u00edas: m\u00faltiplos de mercado (60%) y descuento de flujos de caja (20%), con un ajuste cualitativo (20%).");
+    y=ck(35);let tx=M;doc.setFillColor(NY);doc.rect(M,y,CW,7,"F");doc.setFontSize(7.5);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");["M\u00e9todo","Valor Comp.","Valor Partic.","Peso"].forEach((h,i)=>{doc.text(h,tx+2,y+5);tx+=[50,40,48,24][i]});y+=7;doc.setFont("helvetica","normal");doc.setTextColor(IK);doc.setFontSize(9);
+    [["M\u00faltiplos comparables",fmtM(r.evMultiples),fmtM(r.eqMultiples),"60%"],["DCF simplificado",fmtM(r.evDcf),fmtM(r.eqDcf),"20%"],["Ajuste cualitativo","","Score "+r.qualScore+"/100","20%"],["Valoraci\u00f3n ponderada",fmtM(r.evBlended),fmtM(r.eqBlended),"100%"]].forEach((rw,ri)=>{tx=M;if(ri===3)doc.setFont("helvetica","bold");if(ri%2===0){doc.setFillColor("#f7f8fb");doc.rect(M,y,CW,7,"F")}rw.forEach((c,ci)=>{doc.text(c,tx+2,y+5);tx+=[50,40,48,24][ci]});y+=7;doc.setFont("helvetica","normal")});y+=6;
+    // Bridge
+    y=ck(25);sT("Puente de valoraci\u00f3n");box3(sx,y,"#e8eefb","Valor Compa\u00f1\u00eda",fmtM(r.evBlended),GY,BL);sign(sx+bbW+gap/2,y,r.dfn>0?"\u2212":"+");box3(sx+bbW+gap,y,r.dfn>0?"#fee2e2":"#e6f7ed","Deuda Fin. Neta",fmtM(Math.abs(r.dfn)),GY,r.dfn>0?RD:GR);sign(sx+2*bbW+1.5*gap,y,"=");box3(sx+2*(bbW+gap),y,NY,"Valor Participaciones",fmtM(r.eqBlended),"#8899bb","#ffffff");y+=bh+10;
+    // Quality Score
+    sT("Quality Score");bT("Puntuaci\u00f3n global: "+r.qualScore+"/100 (percentil "+Math.round(r.percentile*100)+").");qualDetails.forEach(d=>{y=ck(14);doc.setFontSize(9);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(d.label,M,y);doc.text(d.score+"/100",M+CW,y,{align:"right"});y+=3;doc.setFillColor("#f0f4fa");doc.roundedRect(M,y,CW,3,1,1,"F");doc.setFillColor(d.score>=70?GR:d.score>=40?BL:AM);if(d.score>0)doc.roundedRect(M,y,CW*d.score/100,3,1,1,"F");y+=5;const ex=getQualExplanation(d.id,d.optionIndex);if(ex&&d.score>0){doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(GY);const l=doc.splitTextToSize(ex,CW);y=ck(l.length*3.5);doc.text(l,M,y);y+=l.length*3.5+2}y+=2});
+    // DCF
+    sT("Hip\u00f3tesis del modelo financiero (DCF)");bT("Estima el valor en funci\u00f3n del dinero que generar\u00e1 la empresa en el futuro, descontado a valor presente.");y=ck(50);tx=M;doc.setFillColor(NY);doc.rect(M,y,CW,7,"F");doc.setFontSize(7.5);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");doc.text("Par\u00e1metro",M+2,y+5);doc.text("Valor",M+55,y+5);doc.text("Descripci\u00f3n",M+95,y+5);y+=7;doc.setFont("helvetica","normal");
+    [["EBITDA",fmtM(r.ebitda),"Res. explotaci\u00f3n + amortizaci\u00f3n"],["Crecimiento",fmtPct(r.cappedGrowth)+"\u2192"+fmtPct(TERMINAL_GROWTH),"Basado en hist\u00f3rico"],["WACC",fmtPct(r.wacc),"Tasa de descuento"],["Impuestos",fmtPct(TAX_RATE),"IS Espa\u00f1a"],["g terminal",fmtPct(TERMINAL_GROWTH),"Crecimiento perpetuo"],["Proyecci\u00f3n",PROJECTION_YEARS+" a\u00f1os","Horizonte expl\u00edcito"]].forEach((rw,ri)=>{if(ri%2===0){doc.setFillColor("#f7f8fb");doc.rect(M,y,CW,7,"F")}doc.setFontSize(8.5);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(rw[0],M+2,y+5);doc.setFont("helvetica","normal");doc.text(rw[1],M+55,y+5);doc.setFontSize(7.5);doc.setTextColor(GY);doc.text(rw[2],M+95,y+5);y+=7});y+=6;
+    // DCF composition
+    y=ck(30);sT("Composici\u00f3n del valor por DCF");box3(sx,y,"#e8eefb","VP flujos proyectados",fmtM(r.sumPvFcf),GY,BL);sign(sx+bbW+gap/2,y,"+");box3(sx+bbW+gap,y,"#fef6e7","VP valor terminal",fmtM(r.pvTerminal),GY,AM);sign(sx+2*bbW+1.5*gap,y,"=");box3(sx+2*(bbW+gap),y,NY,"Valor Compa\u00f1\u00eda (DCF)",fmtM(r.evDcf),"#8899bb","#ffffff");y+=bh+10;
+    // Disclaimer
+    y=ck(15);doc.setFillColor("#fef6e7");doc.roundedRect(M,y,CW,12,2,2,"F");doc.setFontSize(7.5);doc.setTextColor(AM);doc.setFont("helvetica","bold");doc.text("Aviso legal:",M+4,y+5);doc.setFont("helvetica","normal");doc.text("Esta valoraci\u00f3n tiene car\u00e1cter indicativo y orientativo.",M+24,y+5);doc.text("Para una valoraci\u00f3n vinculante, contratar un asesor profesional.",M+4,y+9);
+    // Footers
+    const tp=doc.getNumberOfPages();for(let i=1;i<=tp;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(GY);doc.text("valoratuempresa.es",W/2,H-10,{align:"center"});doc.text("P\u00e1g. "+i+"/"+tp,W-M,H-10,{align:"right"})}
+    doc.save("Valoracion_"+(data.name||"empresa").replace(/[^a-zA-Z0-9]/g,"_")+"_"+new Date().toISOString().slice(0,10)+".pdf");
+    setPdfLoading(false);
+  }
 
   return<div className="fade-in">
     <h2 className="app-title">Resultado de la valoración</h2>
@@ -290,29 +307,15 @@ function StepResults({data,onBack,onHome}){
     {/* ESSENTIAL PLAN - full content */}
     {plan==="essential"&&<>
       {/* Success banner - not in PDF */}
-      <div style={{background:"var(--greenS)",border:"1.5px solid #b8e6c8",borderRadius:"var(--rs)",padding:"16px 20px",marginBottom:24,display:"flex",alignItems:"center",gap:12}} className="no-pdf">
+      <div style={{background:"var(--greenS)",border:"1.5px solid #b8e6c8",borderRadius:"var(--rs)",padding:"16px 20px",marginBottom:24,display:"flex",alignItems:"center",gap:12}}>
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M16.667 5L7.5 14.167 3.333 10" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         <div><p style={{fontSize:15,fontWeight:600,color:"var(--green)",margin:0}}>Informe Esencial desbloqueado</p><p style={{fontSize:13,color:"var(--ink3)",margin:0}}>Enviado a {data.contactEmail||"tu email"}</p></div>
       </div>
 
-      {/* PDF Content wrapper */}
-      <div ref={pdfRef}>
-        {/* PDF Header - only visible in PDF */}
-        <div className="pdf-only" style={{display:"none",marginBottom:24,paddingBottom:16,borderBottom:"2px solid #1a56db"}}>
-          <div style={{fontSize:20,fontWeight:800,color:"#0b1222",marginBottom:4}}>valora<span style={{color:"#1a56db"}}>tuempresa</span>.es</div>
-          <div style={{fontSize:24,fontWeight:600,color:"#0b1222",fontFamily:"'Instrument Serif',serif",marginBottom:4}}>Informe de Valoración Esencial</div>
-          <div style={{fontSize:13,color:"#6b7a96"}}>{data.name||"Empresa"} · {r.sector.label} · {new Date().toLocaleDateString("es-ES",{day:"numeric",month:"long",year:"numeric"})}</div>
-        </div>
 
-        {/* Valuation summary for PDF */}
-        <div className="pdf-only" style={{display:"none",textAlign:"center",padding:"20px",background:"#0f1a2e",borderRadius:12,marginBottom:20,color:"#fff"}}>
-          <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:2,color:"rgba(255,255,255,0.4)",marginBottom:8}}>Valor de las participaciones (Equity Value)</div>
-          <div style={{fontSize:36,fontWeight:700,fontFamily:"'Instrument Serif',serif"}}>{fmtM(r.eqBlended)}</div>
-          <div style={{fontSize:14,color:"rgba(255,255,255,0.5)",marginTop:6}}>Rango: {fmtM(r.eqLow)} – {fmtM(r.eqHigh)}</div>
-        </div>
 
       {/* AI Company Analysis */}
-      <CompanyAnalysis data={data}/>
+      <CompanyAnalysis data={data} onAnalysisReady={setCompanyAnalysis}/>
 
       {/* Methodology with explanation */}
       <div className="r-sec">
@@ -382,12 +385,7 @@ function StepResults({data,onBack,onHome}){
         </div>
       </div>
 
-        {/* PDF Footer */}
-        <div className="pdf-only" style={{display:"none",marginTop:24,paddingTop:12,borderTop:"1px solid #e4e8f1",fontSize:11,color:"#6b7a96",textAlign:"center"}}>
-          <p style={{margin:0}}>Informe generado por valoratuempresa.es · SP Financial Advisory LLC</p>
-          <p style={{margin:"4px 0 0"}}>Aviso legal: Esta valoración tiene carácter indicativo y orientativo. No constituye asesoramiento financiero, fiscal ni legal.</p>
-        </div>
-      </div>{/* End pdfRef */}
+
 
       {/* Download button */}
       <div style={{textAlign:"center",margin:"28px 0"}}>
