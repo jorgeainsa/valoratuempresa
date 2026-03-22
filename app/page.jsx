@@ -128,7 +128,7 @@ function LandingPage({onStart,scrollToRef}){
 }
 
 // ─── APP STEPS ───────────────────────────────────────────────
-const APP_STEPS=[{id:"company",label:"Empresa"},{id:"financials",label:"Financieros"},{id:"qualitative",label:"Cualitativo"},{id:"results",label:"Resultado"}];
+const APP_STEPS=[{id:"company",label:"Empresa"},{id:"financials",label:"Financieros"},{id:"qualitative",label:"Cualitativo"},{id:"email",label:"Contacto"},{id:"results",label:"Resultado"}];
 
 function StepCompany({data,onChange}){return<div className="fade-in"><h2 className="app-title">Tu empresa</h2><p className="app-sub">Información básica sobre la compañía para contextualizar la valoración.</p><div className="fgrid"><div className="fld fw"><label>Nombre de la empresa</label><input type="text" placeholder="Ej: Tech Solutions SL" value={data.name||""} onChange={e=>onChange("name",e.target.value)}/></div><div className="fld fw"><label>Sector</label><select value={data.sector||""} onChange={e=>onChange("sector",e.target.value)}><option value="">Selecciona un sector</option>{SECTORS.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></div><div className="fld"><label>Año de fundación</label><input type="number" placeholder="Ej: 2010" value={data.founded||""} onChange={e=>onChange("founded",e.target.value)}/></div><div className="fld"><label>Número de empleados</label><input type="number" placeholder="Ej: 45" value={data.employees||""} onChange={e=>onChange("employees",e.target.value)}/></div><div className="fld fw"><label>Provincia</label><input type="text" placeholder="Ej: Barcelona" value={data.province||""} onChange={e=>onChange("province",e.target.value)}/></div></div></div>}
 
@@ -148,13 +148,36 @@ function StepFinancials({data,onChange}){return<div className="fade-in"><h2 clas
 
 function StepQualitative({data,onChange}){const answers=data.qualAnswers||{};const answered=Object.keys(answers).length;return<div className="fade-in"><h2 className="app-title">Análisis cualitativo</h2><p className="app-sub">Responde estas preguntas para ajustar la valoración. <strong>{answered}/10 respondidas</strong></p>{QUAL_QUESTIONS.map(q=>{const wl=q.weight===3?"hi":q.weight===2?"md":"lo";const wt=q.weight===3?"Impacto alto":q.weight===2?"Impacto medio":"Impacto bajo";return<div key={q.id} className={`qcard ${answers[q.id]!==undefined?"ans":""}`}><div className="q-hdr"><span className={`q-bdg ${wl}`}>{wt}</span><span className="q-lbl">{q.label}</span></div><p className="q-txt">{q.question}</p><div className="q-opts">{q.options.map((opt,i)=><button key={i} className={`q-opt ${answers[q.id]===i?"sel":""}`} onClick={()=>onChange("qualAnswers",{...answers,[q.id]:i})}>{opt}</button>)}</div></div>})}</div>}
 
+function StepEmail({data,onChange}){
+  return<div className="fade-in">
+    <div style={{textAlign:"center",padding:"20px 0 10px"}}>
+      <div style={{width:64,height:64,borderRadius:"50%",background:"var(--blueS)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px"}}><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg></div>
+      <h2 className="app-title">Un último paso antes de ver tu valoración</h2>
+      <p className="app-sub" style={{maxWidth:480,margin:"0 auto"}}>Introduce tu email para recibir los resultados y poder acceder a tu informe en cualquier momento.</p>
+    </div>
+    <div style={{maxWidth:420,margin:"0 auto"}}>
+      <div className="fgrid">
+        <div className="fld fw"><label>Nombre completo</label><input type="text" placeholder="Ej: Juan García López" value={data.contactName||""} onChange={e=>onChange("contactName",e.target.value)}/></div>
+        <div className="fld fw"><label>Email profesional</label><input type="email" placeholder="Ej: juan@miempresa.es" value={data.contactEmail||""} onChange={e=>onChange("contactEmail",e.target.value)}/></div>
+        <div className="fld fw"><label>Teléfono <span className="u">(opcional)</span></label><input type="tel" placeholder="Ej: 612 345 678" value={data.contactPhone||""} onChange={e=>onChange("contactPhone",e.target.value)}/></div>
+      </div>
+      <p style={{fontSize:12,color:"var(--ink3)",marginTop:16,lineHeight:1.5,textAlign:"center"}}>Tus datos son confidenciales. No compartimos tu información con terceros. Al continuar, aceptas nuestra <a href="#" style={{color:"var(--blue)"}}>política de privacidad</a>.</p>
+    </div>
+  </div>
+}
+
 function StepResults({data,onBack,onHome}){
+  const[plan,setPlan]=useState("free");
   const r=runValuation(data);if(!r)return<p>Error en los datos. Vuelve atrás para corregir.</p>;
   const scoreColor=r.qualScore>70?"var(--green)":r.qualScore>40?"var(--blue)":"var(--amber)";
   const qualDetails=QUAL_QUESTIONS.map(q=>{const val=(data.qualAnswers||{})[q.id];const score=val!==undefined?((val+1)/5)*100:0;return{label:q.label,score:Math.round(score),color:score>=70?"var(--green)":score>=40?"var(--blue)":"var(--amber)"}});
+  const fmtPct=(n)=>(n*100).toFixed(1).replace(".",",")+"%";
+
   return<div className="fade-in">
     <h2 className="app-title">Resultado de la valoración</h2>
     <p className="app-sub">{data.name||"Tu empresa"} · {r.sector.label}</p>
+
+    {/* Hero - always visible */}
     <div className="r-hero"><div className="r-hero-l">Valor de las participaciones (Equity Value)</div><div className="r-hero-v">{fmtM(r.eqBlended)}</div><div className="r-hero-rng">Rango: {fmtM(r.eqLow)} – {fmtM(r.eqHigh)}</div></div>
     <div className="r-grid">
       <div className="r-card"><div className="r-card-t">Valor de la Compañía (Enterprise Value)</div><div className="r-card-v">{fmtM(r.evBlended)}</div><div className="r-card-d">Antes de deducir deuda</div></div>
@@ -162,9 +185,101 @@ function StepResults({data,onBack,onHome}){
       <div className="r-card"><div className="r-card-t">Múltiplo aplicado</div><div className="r-card-v">{r.selectedMult.toFixed(1)}x</div><div className="r-card-d">EV/EBITDA · Base: {r.baseMultiple.toFixed(1)}x, ajuste: {r.sizeAdj>=0?"+":""}{(r.sizeAdj*100).toFixed(0)}%</div></div>
       <div className="r-card"><div className="r-card-t">Quality Score</div><div className="r-card-v" style={{color:scoreColor}}>{r.qualScore}/100</div><div className="r-card-d">Percentil {Math.round(r.percentile*100)} del rango</div></div>
     </div>
-    <div className="paywall"><h3>Desbloquea el informe completo</h3><p>Obtén el PDF profesional con el desglose por metodología, Quality Score detallado, benchmarking sectorial y recomendaciones.</p><div className="paywall-btns"><button className="pw-btn pw-btn-p" onClick={()=>alert("Estamos en fase de lanzamiento. Próximamente podrás descargar tu informe.")}>Informe Esencial · 149€ + IVA</button><button className="pw-btn pw-btn-o" onClick={()=>alert("Estamos en fase de lanzamiento. Próximamente podrás descargar tu informe.")}>Informe Profesional · 299€ + IVA</button></div></div>
-    <div className="r-sec"><h3>Desglose por metodología (vista previa)</h3><table className="m-tbl"><thead><tr><th>Método</th><th>Valor Compañía</th><th>Valor Participaciones</th><th>Peso</th></tr></thead><tbody><tr><td>Múltiplos comparables</td><td>{fmtM(r.evMultiples)}</td><td>{fmtM(r.eqMultiples)}</td><td>60%</td></tr><tr><td>DCF simplificado</td><td>{fmtM(r.evDcf)}</td><td>{fmtM(r.eqDcf)}</td><td>20%</td></tr><tr><td>Ajuste cualitativo</td><td colSpan="2" style={{textAlign:"center"}}>Score {r.qualScore}/100</td><td>20%</td></tr><tr><td>Valoración ponderada</td><td>{fmtM(r.evBlended)}</td><td>{fmtM(r.eqBlended)}</td><td>100%</td></tr></tbody></table></div>
-    <div className="r-sec"><h3>Quality Score · Desglose</h3><div>{qualDetails.map((d,i)=><div className="sc-row" key={i}><span className="sc-lbl">{d.label}</span><div className="sc-bg"><div className="sc-fill" style={{width:d.score+"%",background:d.color}}/></div><span className="sc-val">{d.score}</span></div>)}</div></div>
+
+    {/* Paywall - shown when plan is free */}
+    {plan==="free"&&<>
+      <div className="paywall">
+        <h3>Desbloquea el informe completo</h3>
+        <p>Obtén el desglose detallado por metodología, Quality Score por cada factor, hipótesis del DCF y descarga tu informe en PDF.</p>
+        <div className="paywall-btns">
+          <button className="pw-btn pw-btn-p" onClick={()=>setPlan("essential")}>Informe Esencial · 149€ + IVA</button>
+          <button className="pw-btn pw-btn-o" onClick={()=>alert("Próximamente disponible. El Informe Profesional incluirá análisis de sensibilidad, benchmarking sectorial y revisión por un analista.")}>Informe Profesional · 299€ + IVA</button>
+        </div>
+        <p style={{fontSize:12,color:"var(--ink3)",marginTop:14}}>De momento, el pago no está activado. Haz clic para previsualizar el informe.</p>
+      </div>
+      {/* Blurred preview of methodology table */}
+      <div style={{position:"relative"}}>
+        <div style={{filter:"blur(6px)",pointerEvents:"none",userSelect:"none",opacity:0.5}}>
+          <div className="r-sec"><h3>Desglose por metodología</h3><table className="m-tbl"><thead><tr><th>Método</th><th>Valor Compañía</th><th>Valor Participaciones</th><th>Peso</th></tr></thead><tbody><tr><td>Múltiplos comparables</td><td>{fmtM(r.evMultiples)}</td><td>{fmtM(r.eqMultiples)}</td><td>60%</td></tr><tr><td>DCF simplificado</td><td>{fmtM(r.evDcf)}</td><td>{fmtM(r.eqDcf)}</td><td>20%</td></tr><tr><td>Ajuste cualitativo</td><td colSpan="2" style={{textAlign:"center"}}>Score {r.qualScore}/100</td><td>20%</td></tr><tr><td>Valoración ponderada</td><td>{fmtM(r.evBlended)}</td><td>{fmtM(r.eqBlended)}</td><td>100%</td></tr></tbody></table></div>
+        </div>
+        <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",background:"var(--w)",border:"2px solid var(--blue)",borderRadius:12,padding:"16px 28px",textAlign:"center",boxShadow:"0 4px 24px rgba(0,0,0,0.12)"}}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginBottom:4}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <p style={{fontSize:14,fontWeight:600,color:"var(--ink)",margin:0}}>Disponible en el Informe Esencial</p>
+        </div>
+      </div>
+    </>}
+
+    {/* ESSENTIAL PLAN - full content */}
+    {plan==="essential"&&<>
+      {/* Success banner */}
+      <div style={{background:"var(--greenS)",border:"1.5px solid #b8e6c8",borderRadius:"var(--rs)",padding:"16px 20px",marginBottom:24,display:"flex",alignItems:"center",gap:12}}>
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M16.667 5L7.5 14.167 3.333 10" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <div><p style={{fontSize:15,fontWeight:600,color:"var(--green)",margin:0}}>Informe Esencial desbloqueado</p><p style={{fontSize:13,color:"var(--ink3)",margin:0}}>Enviado a {data.contactEmail||"tu email"}</p></div>
+      </div>
+
+      {/* Methodology breakdown */}
+      <div className="r-sec">
+        <h3>Desglose por metodología</h3>
+        <table className="m-tbl">
+          <thead><tr><th>Método</th><th>Valor Compañía</th><th>Valor Participaciones</th><th>Peso</th></tr></thead>
+          <tbody>
+            <tr><td>Múltiplos comparables</td><td>{fmtM(r.evMultiples)}</td><td>{fmtM(r.eqMultiples)}</td><td>60%</td></tr>
+            <tr><td>DCF simplificado</td><td>{fmtM(r.evDcf)}</td><td>{fmtM(r.eqDcf)}</td><td>20%</td></tr>
+            <tr><td>Ajuste cualitativo</td><td colSpan="2" style={{textAlign:"center"}}>Score {r.qualScore}/100</td><td>20%</td></tr>
+            <tr><td>Valoración ponderada</td><td>{fmtM(r.evBlended)}</td><td>{fmtM(r.eqBlended)}</td><td>100%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Quality Score detailed breakdown */}
+      <div className="r-sec">
+        <h3>Quality Score · Desglose detallado</h3>
+        <p style={{fontSize:13,color:"var(--ink3)",marginBottom:16}}>Puntuación de 0 a 100 en cada factor. Los factores de impacto alto tienen mayor peso en la valoración final.</p>
+        <div>{qualDetails.map((d,i)=><div className="sc-row" key={i}><span className="sc-lbl">{d.label}</span><div className="sc-bg"><div className="sc-fill" style={{width:d.score+"%",background:d.color}}/></div><span className="sc-val">{d.score}</span></div>)}</div>
+        <div style={{marginTop:16,padding:"12px 16px",background:"var(--bg)",borderRadius:"var(--rs)",fontSize:13,color:"var(--ink2)"}}>
+          <strong>Interpretación:</strong> Tu Quality Score de <strong style={{color:scoreColor}}>{r.qualScore}/100</strong> sitúa tu empresa en el <strong>percentil {Math.round(r.percentile*100)}</strong> del rango de valoración de tu sector. {r.qualScore>=70?"Tu empresa muestra fortalezas significativas que justifican una valoración por encima de la mediana.":r.qualScore>=40?"Tu empresa se sitúa en la zona media del rango. Hay margen de mejora en varios factores.":"Tu empresa presenta áreas de riesgo que presionan la valoración a la baja. Mejorar estos factores podría aumentar significativamente el valor."}
+        </div>
+      </div>
+
+      {/* DCF Assumptions */}
+      <div className="r-sec">
+        <h3>Hipótesis del modelo DCF</h3>
+        <table className="m-tbl">
+          <thead><tr><th>Parámetro</th><th>Valor</th></tr></thead>
+          <tbody>
+            <tr><td>EBITDA calculado (Res. Explotación + Amortización)</td><td>{fmtM(r.ebitda)}</td></tr>
+            <tr><td>Crecimiento proyectado (con fade)</td><td>{fmtPct(r.cappedGrowth)} → {fmtPct(TERMINAL_GROWTH)}</td></tr>
+            <tr><td>WACC (coste de capital)</td><td>{fmtPct(r.wacc)}</td></tr>
+            <tr><td>Tasa impositiva</td><td>{fmtPct(TAX_RATE)}</td></tr>
+            <tr><td>Crecimiento terminal</td><td>{fmtPct(TERMINAL_GROWTH)}</td></tr>
+            <tr><td>Período de proyección</td><td>{PROJECTION_YEARS} años</td></tr>
+            <tr><td>Valor presente de los flujos proyectados</td><td>{fmtM(r.sumPvFcf)}</td></tr>
+            <tr><td>Valor presente del valor terminal</td><td>{fmtM(r.pvTerminal)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Valuation bridge */}
+      <div className="r-sec">
+        <h3>Puente de valoración</h3>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,flexWrap:"wrap",padding:"16px 0"}}>
+          <div style={{textAlign:"center",padding:"12px 20px",background:"var(--blueS)",borderRadius:"var(--rs)"}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:2}}>Valor Compañía</div><div style={{fontSize:20,fontWeight:600,color:"var(--blue)"}}>{fmtM(r.evBlended)}</div></div>
+          <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>{r.dfn>0?"−":"+"}</span>
+          <div style={{textAlign:"center",padding:"12px 20px",background:r.dfn>0?"var(--redS)":"var(--greenS)",borderRadius:"var(--rs)"}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:2}}>Deuda Fin. Neta</div><div style={{fontSize:20,fontWeight:600,color:r.dfn>0?"var(--red)":"var(--green)"}}>{fmtM(Math.abs(r.dfn))}</div></div>
+          <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>=</span>
+          <div style={{textAlign:"center",padding:"12px 20px",background:"var(--navy)",borderRadius:"var(--rs)"}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:2}}>Valor Participaciones</div><div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{fmtM(r.eqBlended)}</div></div>
+        </div>
+      </div>
+
+      {/* Download button placeholder */}
+      <div style={{textAlign:"center",margin:"28px 0"}}>
+        <button className="btn btn-p" style={{padding:"14px 36px",fontSize:16}} onClick={()=>alert("La generación de PDF estará disponible próximamente.")}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+          Descargar informe PDF
+        </button>
+      </div>
+    </>}
+
     <div className="discl"><strong>Aviso legal:</strong> Esta valoración tiene carácter indicativo y orientativo.</div>
     <div className="btn-row"><button className="btn btn-g" onClick={onBack}>← Modificar datos</button><button className="btn btn-g" onClick={onHome}>Volver al inicio</button></div>
   </div>
@@ -174,7 +289,13 @@ function StepResults({data,onBack,onHome}){
 function ValuationApp({onHome}){
   const[step,setStep]=useState(0);const[data,setData]=useState({qualAnswers:{}});const topRef=useRef(null);
   const onChange=(k,v)=>setData(d=>({...d,[k]:v}));
-  const canNext=()=>{if(step===0)return data.sector;if(step===1)return data.revenue&&data.resExplotacion;if(step===2)return Object.keys(data.qualAnswers||{}).length>=5;return false};
+  const canNext=()=>{
+    if(step===0)return data.sector;
+    if(step===1)return data.revenue&&data.resExplotacion;
+    if(step===2)return Object.keys(data.qualAnswers||{}).length>=5;
+    if(step===3)return data.contactEmail&&data.contactEmail.includes("@");
+    return false;
+  };
   const go=(dir)=>{setStep(s=>s+dir);topRef.current?.scrollIntoView({behavior:"smooth"})};
   return<div className="app-overlay"><div ref={topRef}/>
     <div className="app-hdr"><div className="app-hdr-inner"><div className="app-hdr-left"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span className="app-hdr-title">Herramienta de valoración</span></div><div className="app-hdr-right">Paso {step+1} de {APP_STEPS.length} · <strong>{APP_STEPS[step].label}</strong></div></div><div className="app-hdr-prog"><div className="app-hdr-bar" style={{width:`${((step+1)/APP_STEPS.length)*100}%`}}/></div></div>
@@ -182,8 +303,9 @@ function ValuationApp({onHome}){
       {step===0&&<StepCompany data={data} onChange={onChange}/>}
       {step===1&&<StepFinancials data={data} onChange={onChange}/>}
       {step===2&&<StepQualitative data={data} onChange={onChange}/>}
-      {step===3&&<StepResults data={data} onBack={()=>go(-1)} onHome={onHome}/>}
-      {step<3&&<div className="btn-row">{step>0?<button className="btn btn-g" onClick={()=>go(-1)}>← Atrás</button>:<button className="btn btn-g" onClick={onHome}>← Volver al inicio</button>}<button className="btn btn-p" disabled={!canNext()} onClick={()=>go(1)}>{step===2?"Ver valoración →":"Siguiente →"}</button></div>}
+      {step===3&&<StepEmail data={data} onChange={onChange}/>}
+      {step===4&&<StepResults data={data} onBack={()=>go(-1)} onHome={onHome}/>}
+      {step<4&&<div className="btn-row">{step>0?<button className="btn btn-g" onClick={()=>go(-1)}>← Atrás</button>:<button className="btn btn-g" onClick={onHome}>← Volver al inicio</button>}<button className="btn btn-p" disabled={!canNext()} onClick={()=>go(1)}>{step===3?"Ver mi valoración →":step===2?"Siguiente →":"Siguiente →"}</button></div>}
     </div>
   </div>
 }
