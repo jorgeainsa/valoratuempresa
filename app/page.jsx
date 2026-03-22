@@ -178,7 +178,9 @@ function CompanyAnalysis({data}){
     const prompt=`Eres un analista de valoración de empresas. Genera un análisis cualitativo breve y profesional de la siguiente empresa. Responde SOLO con un JSON válido, sin backticks ni markdown.
 Datos: Nombre: ${data.name||"No proporcionado"}, Web: ${data.website||"No proporcionada"}, Sector: ${sector?.label||"No especificado"}, Fundación: ${data.founded||"No proporcionado"}, Empleados: ${data.employees||"No proporcionado"}, Provincia: ${data.province||"No proporcionada"}, Facturación: ${pE(data.revenue).toLocaleString("es-ES")}€
 Genera JSON con: {"descripcion":"2-4 frases","historia":"2-4 frases","modelo":"2-4 frases","oferta":"2-4 frases","geografia":"2-4 frases","metricas":"2-4 frases"} Todo en español. Si no conoces la empresa, genera análisis plausible basado en sector y tamaño.`;
-    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})})
+    const apiKey=process.env.NEXT_PUBLIC_ANTHROPIC_KEY;
+    if(!apiKey){setError("Análisis no disponible en este momento.");setLoading(false);return}
+    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})})
     .then(r=>r.json()).then(d=>{
       const txt=d.content?.map(i=>i.text||"").join("")||"";
       try{setAnalysis(JSON.parse(txt.replace(/```json|```/g,"").trim()))}catch(e){setError("No se pudo generar el análisis.")}
@@ -322,11 +324,11 @@ function StepResults({data,onBack,onHome}){
         <h3>Puente de valoración</h3>
         <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>El valor de las participaciones se obtiene restando la deuda financiera neta del valor de la compañía. Si la empresa tiene más caja que deuda, este importe se suma al valor.</p>
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,flexWrap:"wrap",padding:"16px 0"}}>
-          <div style={{textAlign:"center",padding:"12px 20px",background:"var(--blueS)",borderRadius:"var(--rs)"}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:2}}>Valor Compañía</div><div style={{fontSize:20,fontWeight:600,color:"var(--blue)"}}>{fmtM(r.evBlended)}</div></div>
+          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--blueS)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:2}}>Valor Compañía</div><div style={{fontSize:20,fontWeight:600,color:"var(--blue)"}}>{fmtM(r.evBlended)}</div></div>
           <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>{r.dfn>0?"−":"+"}</span>
-          <div style={{textAlign:"center",padding:"12px 20px",background:r.dfn>0?"var(--redS)":"var(--greenS)",borderRadius:"var(--rs)"}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:2}}>Deuda Fin. Neta</div><div style={{fontSize:20,fontWeight:600,color:r.dfn>0?"var(--red)":"var(--green)"}}>{fmtM(Math.abs(r.dfn))}</div></div>
+          <div style={{textAlign:"center",padding:"14px 22px",background:r.dfn>0?"var(--redS)":"var(--greenS)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:2}}>Deuda Fin. Neta</div><div style={{fontSize:20,fontWeight:600,color:r.dfn>0?"var(--red)":"var(--green)"}}>{fmtM(Math.abs(r.dfn))}</div></div>
           <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>=</span>
-          <div style={{textAlign:"center",padding:"12px 20px",background:"var(--navy)",borderRadius:"var(--rs)"}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:2}}>Valor Participaciones</div><div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{fmtM(r.eqBlended)}</div></div>
+          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--navy)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:2}}>Valor Participaciones</div><div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{fmtM(r.eqBlended)}</div></div>
         </div>
       </div>
 
