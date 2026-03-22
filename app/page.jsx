@@ -316,7 +316,7 @@ function StepResults({data,onBack,onHome}){
           <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>+</span>
           <div style={{textAlign:"center",padding:"14px 22px",background:"var(--amberS)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:4}}>VP valor terminal</div><div style={{fontSize:20,fontWeight:600,color:"var(--amber)"}}>{fmtM(r.pvTerminal)}</div><div style={{fontSize:11,color:"var(--ink3)",marginTop:4}}>Año {PROJECTION_YEARS}+</div></div>
           <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>=</span>
-          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--navy)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:4}}>Valor Compañía (DCF)</div><div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{fmtM(r.evDcf)}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:4}}>Resultado DCF</div></div>
+          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--navy)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:4}}>Valor Compañía (DCF)</div><div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{fmtM(r.evDcf)}</div></div>
         </div>
       </div>
 
@@ -329,7 +329,7 @@ function StepResults({data,onBack,onHome}){
           <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>{r.dfn>0?"−":"+"}</span>
           <div style={{textAlign:"center",padding:"14px 22px",background:r.dfn>0?"var(--redS)":"var(--greenS)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:2}}>Deuda Fin. Neta</div><div style={{fontSize:20,fontWeight:600,color:r.dfn>0?"var(--red)":"var(--green)"}}>{fmtM(Math.abs(r.dfn))}</div></div>
           <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>=</span>
-          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--navy)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:2}}>Valor Participaciones</div><div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{fmtM(r.eqBlended)}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2}}>Equity Value</div></div>
+          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--navy)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:2}}>Valor Participaciones</div><div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{fmtM(r.eqBlended)}</div></div>
         </div>
       </div>
 
@@ -369,7 +369,7 @@ function ValuationApp({onHome}){
     if(step===3)return data.contactEmail&&data.contactEmail.includes("@");
     return false;
   };
-  const go=(dir)=>{setStep(s=>s+dir);window.scrollTo({top:0,behavior:"smooth"})};
+  const go=(dir)=>{setStep(s=>s+dir);setTimeout(()=>{window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0},50)};
   return<div className="app-overlay"><div ref={topRef}/>
     <div className="app-hdr"><div className="app-hdr-inner"><div className="app-hdr-left"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span className="app-hdr-title">Herramienta de valoración</span></div><div className="app-hdr-right">Paso {step+1} de {APP_STEPS.length} · <strong>{APP_STEPS[step].label}</strong></div></div><div className="app-hdr-prog"><div className="app-hdr-bar" style={{width:`${((step+1)/APP_STEPS.length)*100}%`}}/></div></div>
     <div className="app-main">
