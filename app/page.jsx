@@ -188,14 +188,138 @@ function ValuationApp({onHome}){
   </div>
 }
 
+// ─── LEGAL PAGES ─────────────────────────────────────────────
+function LegalPage({title, children, onHome}){
+  return<div style={{paddingTop:68,minHeight:"100vh",background:"var(--bg)"}}>
+    <div style={{maxWidth:760,margin:"0 auto",padding:"48px 24px 80px"}}>
+      <button className="btn btn-g" onClick={onHome} style={{marginBottom:28}}>← Volver al inicio</button>
+      <h1 style={{fontFamily:"'Instrument Serif',Georgia,serif",fontSize:32,fontWeight:400,marginBottom:8}}>{title}</h1>
+      <p style={{fontSize:13,color:"var(--ink3)",marginBottom:32}}>Última actualización: marzo 2026</p>
+      <div className="legal-content">{children}</div>
+    </div>
+  </div>
+}
+
+function PrivacyPolicy({onHome}){
+  return<LegalPage title="Política de privacidad" onHome={onHome}>
+    <h2>1. Responsable del tratamiento</h2>
+    <p>SP Financial Advisory LLC, con domicilio en 1209 Mountain Road Place Northeast, Albuquerque, NM 87110, United States (en adelante, "el Responsable"), es la entidad responsable del tratamiento de los datos personales recogidos a través del sitio web valoratuempresa.es.</p>
+    <p>Email de contacto: info@valoratuempresa.es</p>
+
+    <h2>2. Datos que recogemos</h2>
+    <p>A través de nuestro servicio de valoración de empresas, podemos recoger las siguientes categorías de datos:</p>
+    <p><strong>Datos de la empresa:</strong> nombre, sector, provincia, año de fundación, número de empleados.</p>
+    <p><strong>Datos financieros:</strong> facturación, resultado de explotación, amortización, deuda financiera, caja, inversión anual y datos de ejercicios anteriores.</p>
+    <p><strong>Datos cualitativos:</strong> respuestas al cuestionario de análisis cualitativo (recurrencia, concentración de clientes, equipo directivo, etc.).</p>
+    <p><strong>Datos de contacto:</strong> dirección de email (cuando el usuario la proporciona voluntariamente para recibir comunicaciones).</p>
+    <p><strong>Datos técnicos:</strong> dirección IP, tipo de navegador, sistema operativo, páginas visitadas y duración de la visita, recogidos automáticamente mediante cookies y tecnologías similares.</p>
+
+    <h2>3. Finalidad del tratamiento</h2>
+    <p>Los datos recogidos se utilizan exclusivamente para las siguientes finalidades:</p>
+    <p>• Generar la valoración indicativa de la empresa del usuario.</p>
+    <p>• Elaborar y entregar el informe de valoración contratado.</p>
+    <p>• Gestionar el proceso de pago y facturación.</p>
+    <p>• Enviar comunicaciones relacionadas con el servicio contratado.</p>
+    <p>• Mejorar nuestro servicio y la experiencia del usuario mediante análisis estadísticos agregados.</p>
+
+    <h2>4. Base legal del tratamiento</h2>
+    <p>El tratamiento de los datos se basa en:</p>
+    <p>• <strong>Ejecución de un contrato:</strong> el tratamiento es necesario para prestar el servicio de valoración solicitado por el usuario.</p>
+    <p>• <strong>Consentimiento:</strong> para el envío de comunicaciones comerciales y el uso de cookies no esenciales.</p>
+    <p>• <strong>Interés legítimo:</strong> para la mejora del servicio y la prevención del fraude.</p>
+
+    <h2>5. Conservación de los datos</h2>
+    <p>Los datos financieros introducidos por el usuario se conservarán durante un máximo de 30 días desde la última actividad del usuario, salvo que exista una relación contractual vigente. Los datos asociados a informes adquiridos se conservarán durante el período legalmente exigido para obligaciones fiscales y contables.</p>
+
+    <h2>6. Comunicación de datos a terceros</h2>
+    <p>No compartimos datos personales ni financieros con terceros, salvo en los siguientes casos:</p>
+    <p>• <strong>Proveedores de servicios de pago:</strong> Stripe, Inc. procesa los datos de pago necesarios para completar la transacción. Stripe actúa como responsable independiente del tratamiento de los datos de pago.</p>
+    <p>• <strong>Proveedores de hosting:</strong> Vercel, Inc. aloja nuestra plataforma.</p>
+    <p>• <strong>Obligación legal:</strong> cuando sea requerido por ley o por una autoridad judicial o administrativa competente.</p>
+
+    <h2>7. Transferencias internacionales</h2>
+    <p>Dado que SP Financial Advisory LLC tiene su sede en Estados Unidos, los datos podrán ser transferidos y tratados en Estados Unidos. Estas transferencias se realizan con las garantías adecuadas, incluyendo las Cláusulas Contractuales Tipo aprobadas por la Comisión Europea y el cumplimiento del marco EU-US Data Privacy Framework, cuando sea aplicable.</p>
+
+    <h2>8. Derechos del usuario (RGPD)</h2>
+    <p>Aunque SP Financial Advisory LLC está constituida en Estados Unidos, al dirigir sus servicios a usuarios en el Espacio Económico Europeo, cumple con el Reglamento General de Protección de Datos (RGPD). Como usuario, tienes derecho a:</p>
+    <p>• <strong>Acceso:</strong> solicitar una copia de tus datos personales.</p>
+    <p>• <strong>Rectificación:</strong> corregir datos inexactos o incompletos.</p>
+    <p>• <strong>Supresión:</strong> solicitar la eliminación de tus datos ("derecho al olvido").</p>
+    <p>• <strong>Limitación:</strong> solicitar la restricción del tratamiento de tus datos.</p>
+    <p>• <strong>Portabilidad:</strong> recibir tus datos en un formato estructurado y de uso común.</p>
+    <p>• <strong>Oposición:</strong> oponerte al tratamiento de tus datos en determinadas circunstancias.</p>
+    <p>Para ejercer cualquiera de estos derechos, envía un email a info@valoratuempresa.es. Responderemos en un plazo máximo de 30 días.</p>
+    <p>Asimismo, puedes presentar una reclamación ante la Agencia Española de Protección de Datos (www.aepd.es) si consideras que el tratamiento de tus datos no se ajusta a la normativa vigente.</p>
+
+    <h2>9. Cookies</h2>
+    <p>Nuestro sitio web utiliza cookies propias y de terceros con las siguientes finalidades:</p>
+    <p>• <strong>Cookies técnicas (esenciales):</strong> necesarias para el funcionamiento del sitio web y del servicio de valoración.</p>
+    <p>• <strong>Cookies analíticas:</strong> utilizamos Google Analytics para analizar el uso del sitio web de forma agregada. Puedes consultar la política de privacidad de Google en policies.google.com/privacy.</p>
+    <p>• <strong>Cookies de pago:</strong> Stripe utiliza cookies para procesar los pagos de forma segura.</p>
+    <p>Puedes configurar tu navegador para rechazar cookies o para que te avise cuando se envíen. Ten en cuenta que si desactivas las cookies esenciales, es posible que algunas funcionalidades del sitio no estén disponibles.</p>
+
+    <h2>10. Seguridad</h2>
+    <p>Adoptamos medidas técnicas y organizativas adecuadas para proteger los datos personales contra el acceso no autorizado, la pérdida, la destrucción o la alteración. Toda la comunicación entre tu navegador y nuestro servidor se realiza mediante protocolo HTTPS con cifrado TLS.</p>
+
+    <h2>11. Modificaciones</h2>
+    <p>Nos reservamos el derecho de modificar esta política de privacidad en cualquier momento. Cualquier cambio será publicado en esta página con la fecha de última actualización.</p>
+  </LegalPage>
+}
+
+function LegalNotice({onHome}){
+  return<LegalPage title="Aviso legal" onHome={onHome}>
+    <h2>1. Datos identificativos</h2>
+    <p>En cumplimiento del deber de información, se facilitan los siguientes datos del titular del sitio web:</p>
+    <p><strong>Titular:</strong> SP Financial Advisory LLC</p>
+    <p><strong>Domicilio:</strong> 1209 Mountain Road Place Northeast, Albuquerque, NM 87110, United States</p>
+    <p><strong>Email de contacto:</strong> info@valoratuempresa.es</p>
+    <p><strong>Sitio web:</strong> valoratuempresa.es</p>
+
+    <h2>2. Objeto del sitio web</h2>
+    <p>El sitio web valoratuempresa.es tiene como finalidad ofrecer un servicio de valoración indicativa de empresas dirigido principalmente a pequeñas y medianas empresas (PYMEs) en España. El servicio incluye la generación de estimaciones de valor basadas en metodologías de valoración estándar (múltiplos de mercado, descuento de flujos de caja y análisis cualitativo).</p>
+
+    <h2>3. Naturaleza del servicio</h2>
+    <p>Las valoraciones proporcionadas por valoratuempresa.es tienen carácter exclusivamente indicativo y orientativo. En ningún caso constituyen:</p>
+    <p>• Asesoramiento financiero, fiscal, legal o de inversión.</p>
+    <p>• Una valoración pericial con validez legal o vinculante.</p>
+    <p>• Una recomendación de compra, venta o cualquier otra operación corporativa.</p>
+    <p>• Una auditoría o verificación de los datos financieros proporcionados por el usuario.</p>
+    <p>El usuario es el único responsable de la veracidad y exactitud de los datos introducidos en la plataforma. SP Financial Advisory LLC no verifica la información proporcionada por los usuarios.</p>
+
+    <h2>4. Limitación de responsabilidad</h2>
+    <p>SP Financial Advisory LLC no se responsabiliza de:</p>
+    <p>• Las decisiones tomadas por los usuarios basándose en los resultados de la valoración.</p>
+    <p>• Los daños o perjuicios de cualquier naturaleza que puedan derivarse del uso de la información proporcionada.</p>
+    <p>• La exactitud de los resultados, que dependen de la calidad de los datos introducidos y de las condiciones del mercado.</p>
+    <p>• Las interrupciones del servicio, errores técnicos o fallos de seguridad ajenos a su control.</p>
+    <p>Para la toma de decisiones de inversión, compraventa de empresas, procesos judiciales o cualquier otra actuación con implicaciones legales o financieras, se recomienda encarecidamente contratar los servicios de un asesor profesional cualificado.</p>
+
+    <h2>5. Propiedad intelectual e industrial</h2>
+    <p>Todos los contenidos del sitio web (textos, diseños, logotipos, código fuente, metodologías, algoritmos, gráficos y elementos multimedia) son propiedad de SP Financial Advisory LLC o de sus licenciantes, y están protegidos por las leyes de propiedad intelectual e industrial aplicables.</p>
+    <p>Queda prohibida la reproducción, distribución, comunicación pública, transformación o cualquier otra forma de explotación de los contenidos del sitio web sin la autorización expresa y por escrito de SP Financial Advisory LLC.</p>
+
+    <h2>6. Legislación aplicable y jurisdicción</h2>
+    <p>Las presentes condiciones se rigen por la legislación aplicable al usuario según su lugar de residencia. Para usuarios residentes en España o en el Espacio Económico Europeo, se aplicarán las normas de protección del consumidor de su jurisdicción, incluyendo el Reglamento General de Protección de Datos (RGPD).</p>
+    <p>Para la resolución de cualquier controversia, las partes se someterán a los juzgados y tribunales competentes según la legislación aplicable al consumidor.</p>
+
+    <h2>7. Modificaciones</h2>
+    <p>SP Financial Advisory LLC se reserva el derecho de modificar el presente aviso legal en cualquier momento. Las modificaciones entrarán en vigor desde su publicación en el sitio web.</p>
+  </LegalPage>
+}
+
 // ─── MAIN ────────────────────────────────────────────────────
 export default function App(){
   const[view,setView]=useState("landing");const pricingRef=useRef(null);
   const handleStart=()=>{setView("app");window.scrollTo({top:0,behavior:"smooth"})};
   const handleHome=()=>{setView("landing");window.scrollTo({top:0,behavior:"smooth"})};
   const scrollTo=(id)=>{if(view!=="landing"){setView("landing");setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:"smooth"}),100)}else document.getElementById(id)?.scrollIntoView({behavior:"smooth"})};
+  const goPrivacy=()=>{setView("privacy");window.scrollTo({top:0,behavior:"smooth"})};
+  const goLegal=()=>{setView("legal");window.scrollTo({top:0,behavior:"smooth"})};
   return<>
     <nav className="nav"><a className="nav-logo" onClick={handleHome}>valora<span>tuempresa</span>.es</a><div className="nav-links">{view==="landing"&&<><button className="nav-lk" onClick={()=>scrollTo("situaciones")}>Situaciones frecuentes</button><button className="nav-lk" onClick={()=>scrollTo("como")}>Cómo funciona</button><button className="nav-lk" onClick={()=>scrollTo("precios")}>Precios</button><button className="nav-lk" onClick={()=>scrollTo("faq")}>FAQ</button></>}<button className="nav-cta" onClick={handleStart}>Valorar mi empresa</button></div></nav>
-    {view==="landing"?<><LandingPage onStart={handleStart} scrollToRef={pricingRef}/><footer className="footer"><div style={{marginBottom:6}}><span style={{fontWeight:800,color:"var(--ink)"}}>valora<span style={{color:"var(--blue)"}}>tuempresa</span>.es</span></div>© 2026 SP Financial Advisory LLC · <a href="#">Política de privacidad</a> · <a href="#">Aviso legal</a></footer></>:<ValuationApp onHome={handleHome}/>}
+    {view==="landing"?<><LandingPage onStart={handleStart} scrollToRef={pricingRef}/><footer className="footer"><div style={{marginBottom:6}}><span style={{fontWeight:800,color:"var(--ink)"}}>valora<span style={{color:"var(--blue)"}}>tuempresa</span>.es</span></div>© 2026 SP Financial Advisory LLC · <a href="#" onClick={e=>{e.preventDefault();goPrivacy()}}>Política de privacidad</a> · <a href="#" onClick={e=>{e.preventDefault();goLegal()}}>Aviso legal</a></footer></>
+    :view==="privacy"?<PrivacyPolicy onHome={handleHome}/>
+    :view==="legal"?<LegalNotice onHome={handleHome}/>
+    :<ValuationApp onHome={handleHome}/>}
   </>
 }
