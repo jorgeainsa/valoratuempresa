@@ -130,7 +130,7 @@ function LandingPage({onStart,scrollToRef}){
 // ─── APP STEPS ───────────────────────────────────────────────
 const APP_STEPS=[{id:"company",label:"Empresa"},{id:"financials",label:"Financieros"},{id:"qualitative",label:"Cualitativo"},{id:"email",label:"Contacto"},{id:"results",label:"Resultado"}];
 
-function StepCompany({data,onChange}){return<div className="fade-in"><h2 className="app-title">Tu empresa</h2><p className="app-sub">Información básica sobre la compañía para contextualizar la valoración.</p><div className="fgrid"><div className="fld fw"><label>Nombre de la empresa</label><input type="text" placeholder="Ej: Tech Solutions SL" value={data.name||""} onChange={e=>onChange("name",e.target.value)}/></div><div className="fld fw"><label>Sector</label><select value={data.sector||""} onChange={e=>onChange("sector",e.target.value)}><option value="">Selecciona un sector</option>{SECTORS.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></div><div className="fld"><label>Año de fundación</label><input type="number" placeholder="Ej: 2010" value={data.founded||""} onChange={e=>onChange("founded",e.target.value)}/></div><div className="fld"><label>Número de empleados</label><input type="number" placeholder="Ej: 45" value={data.employees||""} onChange={e=>onChange("employees",e.target.value)}/></div><div className="fld fw"><label>Provincia</label><input type="text" placeholder="Ej: Barcelona" value={data.province||""} onChange={e=>onChange("province",e.target.value)}/></div></div></div>}
+function StepCompany({data,onChange}){return<div className="fade-in"><h2 className="app-title">Tu empresa</h2><p className="app-sub">Información básica sobre la compañía para contextualizar la valoración.</p><div className="fgrid"><div className="fld fw"><label>Nombre de la empresa</label><input type="text" placeholder="Ej: Tech Solutions SL" value={data.name||""} onChange={e=>onChange("name",e.target.value)}/></div><div className="fld fw"><label>Página web <span className="u">(opcional)</span></label><input type="url" placeholder="Ej: www.techsolutions.es" value={data.website||""} onChange={e=>onChange("website",e.target.value)}/></div><div className="fld fw"><label>Sector</label><select value={data.sector||""} onChange={e=>onChange("sector",e.target.value)}><option value="">Selecciona un sector</option>{SECTORS.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></div><div className="fld"><label>Año de fundación</label><input type="number" placeholder="Ej: 2010" value={data.founded||""} onChange={e=>onChange("founded",e.target.value)}/></div><div className="fld"><label>Número de empleados</label><input type="number" placeholder="Ej: 45" value={data.employees||""} onChange={e=>onChange("employees",e.target.value)}/></div><div className="fld fw"><label>Provincia</label><input type="text" placeholder="Ej: Barcelona" value={data.province||""} onChange={e=>onChange("province",e.target.value)}/></div></div></div>}
 
 function StepFinancials({data,onChange}){return<div className="fade-in"><h2 className="app-title">Datos financieros</h2><p className="app-sub">Introduce las cifras clave del último ejercicio cerrado. Todos los importes en euros.</p><div className="fgrid">
   <div className="fld-sep">Cuenta de resultados</div>
@@ -166,11 +166,52 @@ function StepEmail({data,onChange}){
   </div>
 }
 
+
+function CompanyAnalysis({data}){
+  const[analysis,setAnalysis]=useState(null);
+  const[loading,setLoading]=useState(true);
+  const[error,setError]=useState(null);
+  const fetched=useRef(false);
+  useEffect(()=>{
+    if(fetched.current)return;fetched.current=true;
+    const sector=SECTORS.find(s=>s.id===data.sector);
+    const prompt=`Eres un analista de valoración de empresas. Genera un análisis cualitativo breve y profesional de la siguiente empresa. Responde SOLO con un JSON válido, sin backticks ni markdown.
+Datos: Nombre: ${data.name||"No proporcionado"}, Web: ${data.website||"No proporcionada"}, Sector: ${sector?.label||"No especificado"}, Fundación: ${data.founded||"No proporcionado"}, Empleados: ${data.employees||"No proporcionado"}, Provincia: ${data.province||"No proporcionada"}, Facturación: ${pE(data.revenue).toLocaleString("es-ES")}€
+Genera JSON con: {"descripcion":"2-4 frases","historia":"2-4 frases","modelo":"2-4 frases","oferta":"2-4 frases","geografia":"2-4 frases","metricas":"2-4 frases"} Todo en español. Si no conoces la empresa, genera análisis plausible basado en sector y tamaño.`;
+    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})})
+    .then(r=>r.json()).then(d=>{
+      const txt=d.content?.map(i=>i.text||"").join("")||"";
+      try{setAnalysis(JSON.parse(txt.replace(/```json|```/g,"").trim()))}catch(e){setError("No se pudo generar el análisis.")}
+      setLoading(false);
+    }).catch(()=>{setError("Error de conexión.");setLoading(false)});
+  },[]);
+  if(loading)return<div className="r-sec"><h3>Análisis de la compañía</h3><p style={{fontSize:14,color:"var(--ink3)",padding:"20px 0",textAlign:"center"}}>Analizando {data.name||"la empresa"}...</p></div>;
+  if(error||!analysis)return<div className="r-sec"><h3>Análisis de la compañía</h3><p style={{fontSize:14,color:"var(--ink3)"}}>{error||"Análisis no disponible."}</p></div>;
+  const sections=[{title:"Descripción del negocio",text:analysis.descripcion},{title:"Historia y trayectoria",text:analysis.historia},{title:"Modelo de negocio",text:analysis.modelo},{title:"Oferta de productos/servicios",text:analysis.oferta},{title:"Presencia geográfica",text:analysis.geografia},{title:"Métricas operativas clave",text:analysis.metricas}];
+  return<div className="r-sec"><h3>Análisis de la compañía</h3>{sections.map((s,i)=>s.text?<div key={i} style={{marginBottom:i<sections.length-1?16:0}}><p style={{fontSize:13,fontWeight:600,color:"var(--ink)",marginBottom:3}}>{s.title}</p><p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,margin:0}}>{s.text}</p></div>:null)}</div>
+}
+
+function getQualExplanation(qId,idx){
+  const e={
+    recurrence:["La empresa tiene muy poca recurrencia, dependiendo de la captación constante de nuevos clientes.","Cierta base de ingresos recurrentes, aunque la mayor parte es variable.","Base sólida de ingresos recurrentes que aporta estabilidad, con margen de mejora.","La mayoría de ingresos son recurrentes, proporcionando gran visibilidad.","Prácticamente toda la facturación es recurrente, maximizando previsibilidad y valor."],
+    concentration:["Concentración muy elevada, riesgo significativo si se pierde un cliente principal.","Dependencia alta de principales clientes. Diversificar mejoraría el perfil de riesgo.","Concentración moderada con equilibrio razonable entre principales y resto de cartera.","Cartera bien diversificada, reduciendo significativamente el riesgo de dependencia.","Excelente diversificación. Ningún cliente individual representa un riesgo material."],
+    founder:["Empresa completamente dependiente del fundador. Su ausencia paralizaría las operaciones.","Dependencia muy alta del fundador. Las operaciones sufrirían un impacto severo.","El fundador es importante pero existe estructura para mantener la operativa con impacto moderado.","Equipo capaz de gestionar operaciones con impacto menor en ausencia del fundador.","Empresa opera independientemente del fundador, con procesos y equipo consolidados."],
+    margins:["Márgenes en caída significativa, indicando presión competitiva o problemas de eficiencia.","Ligera contracción de márgenes que conviene monitorizar.","Márgenes estables, reflejando gestión operativa consistente.","Mejora gradual de márgenes indica buena evolución y posibles economías de escala.","Márgenes mejorados notablemente, sugiriendo fuerte poder de fijación de precios."],
+    moat:["Sin ventajas competitivas diferenciadas, vulnerable a competencia por precio.","Ventajas menores insuficientes para crear una barrera de entrada significativa.","Alguna ventaja competitiva que proporciona cierta protección frente a competencia.","Ventajas claras y difíciles de replicar que refuerzan la posición de mercado.","Ventajas muy fuertes (marca, tecnología, patentes) que otorgan posición privilegiada."],
+    team:["Gestión exclusiva del fundador, sin equipo directivo estructurado.","Una persona clave además del fundador, pero estructura directiva insuficiente.","Equipo directivo en construcción, con funciones clave aún sin cubrir.","Equipo directivo completo y funcional, operativa profesionalizada.","Equipo directivo senior de primer nivel, maximizando confianza de inversores."],
+    scalability:["Modelo requiere crecimiento proporcional de costes, limitando la escalabilidad.","Escalar sería muy complicado sin inversiones significativas en estructura.","Podría escalar con cierta inversión, manteniendo parte de costes fijos estables.","Buena escalabilidad, permite crecer sin aumentar proporcionalmente los costes.","Totalmente escalable con costes marginales muy bajos. Muy valorado en valoración."],
+    geo:["Opera exclusivamente en mercado nacional, dependiente de la economía local.","Presencia internacional incipiente que podría desarrollarse.","Diversificación internacional moderada, cierta protección frente a riesgos locales.","Buena diversificación geográfica, reduce dependencia de un único mercado.","Excelente presencia internacional que diversifica riesgos significativamente."],
+    digital:["Procesos muy poco digitalizados, puede limitar eficiencia y competitividad.","Digitalización baja. Invertir en tecnología mejoraría significativamente la operativa.","Nivel medio de digitalización. Procesos principales funcionan con margen de mejora.","Buen nivel de digitalización, opera con eficiencia.","Totalmente digitalizada con procesos optimizados, reforzando competitividad."],
+    regulation:["Sector sin barreras de entrada significativas, facilita aparición de competidores.","Barreras de entrada muy bajas, poca protección frente a nuevos entrantes.","Barreras moderadas que dificultan parcialmente la entrada de nuevos competidores.","Barreras altas protegen la posición competitiva de la empresa.","Barreras muy elevadas, protección significativa y sostenida a operadores existentes."]
+  };
+  return e[qId]?.[idx]||"";
+}
+
 function StepResults({data,onBack,onHome}){
   const[plan,setPlan]=useState("free");
   const r=runValuation(data);if(!r)return<p>Error en los datos. Vuelve atrás para corregir.</p>;
   const scoreColor=r.qualScore>70?"var(--green)":r.qualScore>40?"var(--blue)":"var(--amber)";
-  const qualDetails=QUAL_QUESTIONS.map(q=>{const val=(data.qualAnswers||{})[q.id];const score=val!==undefined?((val+1)/5)*100:0;return{label:q.label,score:Math.round(score),color:score>=70?"var(--green)":score>=40?"var(--blue)":"var(--amber)"}});
+  const qualDetails=QUAL_QUESTIONS.map(q=>{const val=(data.qualAnswers||{})[q.id];const score=val!==undefined?((val+1)/5)*100:0;return{id:q.id,label:q.label,score:Math.round(score),color:score>=70?"var(--green)":score>=40?"var(--blue)":"var(--amber)",optionIndex:val}});
   const fmtPct=(n)=>(n*100).toFixed(1).replace(".",",")+"%";
 
   return<div className="fade-in">
@@ -200,6 +241,7 @@ function StepResults({data,onBack,onHome}){
       {/* Blurred preview of methodology table */}
       <div style={{position:"relative"}}>
         <div style={{filter:"blur(6px)",pointerEvents:"none",userSelect:"none",opacity:0.5}}>
+          <div className="r-sec"><h3>Análisis de la compañía</h3><p style={{color:"var(--ink3)",fontSize:14}}>Descripción del negocio, historia, modelo operativo, oferta de productos y servicios, presencia geográfica y métricas operativas clave...</p></div>
           <div className="r-sec"><h3>Desglose por metodología</h3><table className="m-tbl"><thead><tr><th>Método</th><th>Valor Compañía</th><th>Valor Participaciones</th><th>Peso</th></tr></thead><tbody><tr><td>Múltiplos comparables</td><td>{fmtM(r.evMultiples)}</td><td>{fmtM(r.eqMultiples)}</td><td>60%</td></tr><tr><td>DCF simplificado</td><td>{fmtM(r.evDcf)}</td><td>{fmtM(r.eqDcf)}</td><td>20%</td></tr><tr><td>Ajuste cualitativo</td><td colSpan="2" style={{textAlign:"center"}}>Score {r.qualScore}/100</td><td>20%</td></tr><tr><td>Valoración ponderada</td><td>{fmtM(r.evBlended)}</td><td>{fmtM(r.eqBlended)}</td><td>100%</td></tr></tbody></table></div>
         </div>
         <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",background:"var(--w)",border:"2px solid var(--blue)",borderRadius:12,padding:"16px 28px",textAlign:"center",boxShadow:"0 4px 24px rgba(0,0,0,0.12)"}}>
@@ -217,9 +259,13 @@ function StepResults({data,onBack,onHome}){
         <div><p style={{fontSize:15,fontWeight:600,color:"var(--green)",margin:0}}>Informe Esencial desbloqueado</p><p style={{fontSize:13,color:"var(--ink3)",margin:0}}>Enviado a {data.contactEmail||"tu email"}</p></div>
       </div>
 
-      {/* Methodology breakdown */}
+      {/* AI Company Analysis */}
+      <CompanyAnalysis data={data}/>
+
+      {/* Methodology with explanation */}
       <div className="r-sec">
         <h3>Desglose por metodología</h3>
+        <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>Para determinar el valor de <strong>{data.name||"tu empresa"}</strong>, hemos aplicado dos metodologías de valoración complementarias. El método de <strong>múltiplos de mercado</strong> (60% del peso) compara tu empresa con transacciones reales de compañías similares en España. El método de <strong>descuento de flujos de caja (DCF)</strong> (20% del peso) estima el valor intrínseco en función de la capacidad futura de generar beneficios. Un <strong>ajuste cualitativo</strong> (20% del peso) posiciona tu empresa dentro del rango según las características específicas de tu negocio.</p>
         <table className="m-tbl">
           <thead><tr><th>Método</th><th>Valor Compañía</th><th>Valor Participaciones</th><th>Peso</th></tr></thead>
           <tbody>
@@ -233,9 +279,9 @@ function StepResults({data,onBack,onHome}){
 
       {/* Quality Score detailed breakdown */}
       <div className="r-sec">
-        <h3>Quality Score · Desglose detallado</h3>
-        <p style={{fontSize:13,color:"var(--ink3)",marginBottom:16}}>Puntuación de 0 a 100 en cada factor. Los factores de impacto alto tienen mayor peso en la valoración final.</p>
-        <div>{qualDetails.map((d,i)=><div className="sc-row" key={i}><span className="sc-lbl">{d.label}</span><div className="sc-bg"><div className="sc-fill" style={{width:d.score+"%",background:d.color}}/></div><span className="sc-val">{d.score}</span></div>)}</div>
+        <h3>Quality Score · Análisis detallado</h3>
+        <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>El Quality Score evalúa 10 características cualitativas de tu empresa que influyen directamente en su valor. Cada factor recibe una puntuación de 0 a 100, ponderada según su impacto en la valoración.</p>
+        <div>{qualDetails.map((d,i)=><div key={i} style={{marginBottom:16,paddingBottom:i<qualDetails.length-1?16:0,borderBottom:i<qualDetails.length-1?"1px solid var(--brd)":"none"}}><div className="sc-row"><span className="sc-lbl">{d.label}</span><div className="sc-bg"><div className="sc-fill" style={{width:d.score+"%",background:d.color}}/></div><span className="sc-val">{d.score}</span></div>{d.optionIndex!==undefined&&<p style={{fontSize:13,color:"var(--ink3)",lineHeight:1.55,margin:"6px 0 0",paddingLeft:142}}>{getQualExplanation(d.id,d.optionIndex)}</p>}</div>)}</div>
         <div style={{marginTop:16,padding:"12px 16px",background:"var(--bg)",borderRadius:"var(--rs)",fontSize:13,color:"var(--ink2)"}}>
           <strong>Interpretación:</strong> Tu Quality Score de <strong style={{color:scoreColor}}>{r.qualScore}/100</strong> sitúa tu empresa en el <strong>percentil {Math.round(r.percentile*100)}</strong> del rango de valoración de tu sector. {r.qualScore>=70?"Tu empresa muestra fortalezas significativas que justifican una valoración por encima de la mediana.":r.qualScore>=40?"Tu empresa se sitúa en la zona media del rango. Hay margen de mejora en varios factores.":"Tu empresa presenta áreas de riesgo que presionan la valoración a la baja. Mejorar estos factores podría aumentar significativamente el valor."}
         </div>
@@ -243,25 +289,38 @@ function StepResults({data,onBack,onHome}){
 
       {/* DCF Assumptions */}
       <div className="r-sec">
-        <h3>Hipótesis del modelo DCF</h3>
+        <h3>Hipótesis del modelo financiero (DCF)</h3>
+        <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>El método de Descuento de Flujos de Caja (DCF) estima cuánto vale tu empresa hoy en función del dinero que generará en el futuro. Proyectamos los beneficios operativos a {PROJECTION_YEARS} años y los traemos a valor presente aplicando una tasa de descuento que refleja el riesgo de tu negocio.</p>
         <table className="m-tbl">
-          <thead><tr><th>Parámetro</th><th>Valor</th></tr></thead>
+          <thead><tr><th>Parámetro</th><th>Valor</th><th>Qué significa</th></tr></thead>
           <tbody>
-            <tr><td>EBITDA calculado (Res. Explotación + Amortización)</td><td>{fmtM(r.ebitda)}</td></tr>
-            <tr><td>Crecimiento proyectado (con fade)</td><td>{fmtPct(r.cappedGrowth)} → {fmtPct(TERMINAL_GROWTH)}</td></tr>
-            <tr><td>WACC (coste de capital)</td><td>{fmtPct(r.wacc)}</td></tr>
-            <tr><td>Tasa impositiva</td><td>{fmtPct(TAX_RATE)}</td></tr>
-            <tr><td>Crecimiento terminal</td><td>{fmtPct(TERMINAL_GROWTH)}</td></tr>
-            <tr><td>Período de proyección</td><td>{PROJECTION_YEARS} años</td></tr>
-            <tr><td>Valor presente de los flujos proyectados</td><td>{fmtM(r.sumPvFcf)}</td></tr>
-            <tr><td>Valor presente del valor terminal</td><td>{fmtM(r.pvTerminal)}</td></tr>
+            <tr><td><strong>EBITDA calculado</strong></td><td>{fmtM(r.ebitda)}</td><td style={{fontSize:13,color:"var(--ink3)"}}>Resultado de explotación + amortización. Es el beneficio operativo antes de intereses, impuestos y amortizaciones.</td></tr>
+            <tr><td><strong>Crecimiento proyectado</strong></td><td>{fmtPct(r.cappedGrowth)} → {fmtPct(TERMINAL_GROWTH)}</td><td style={{fontSize:13,color:"var(--ink3)"}}>Ritmo de crecimiento del EBITDA, basado en tu evolución histórica. Se reduce gradualmente hasta el crecimiento a largo plazo.</td></tr>
+            <tr><td><strong>WACC</strong></td><td>{fmtPct(r.wacc)}</td><td style={{fontSize:13,color:"var(--ink3)"}}>Rentabilidad mínima que un inversor exigiría. A mayor riesgo (Quality Score bajo), mayor WACC y menor valoración.</td></tr>
+            <tr><td><strong>Tasa impositiva</strong></td><td>{fmtPct(TAX_RATE)}</td><td style={{fontSize:13,color:"var(--ink3)"}}>Tipo del Impuesto de Sociedades en España aplicado sobre el beneficio operativo.</td></tr>
+            <tr><td><strong>Crecimiento terminal</strong></td><td>{fmtPct(TERMINAL_GROWTH)}</td><td style={{fontSize:13,color:"var(--ink3)"}}>Tasa de crecimiento indefinido después del período de proyección, basada en el PIB español a largo plazo.</td></tr>
+            <tr><td><strong>Período de proyección</strong></td><td>{PROJECTION_YEARS} años</td><td style={{fontSize:13,color:"var(--ink3)"}}>Horizonte temporal de proyección explícita de los flujos de caja.</td></tr>
           </tbody>
         </table>
+      </div>
+
+      {/* DCF Visual breakdown */}
+      <div className="r-sec">
+        <h3>Composición del valor por DCF</h3>
+        <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>El valor de la compañía por DCF se compone de dos elementos: el valor presente de los flujos de caja de los próximos {PROJECTION_YEARS} años, y el valor terminal que representa todos los flujos futuros a partir de ese momento.</p>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,flexWrap:"wrap",padding:"16px 0"}}>
+          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--blueS)",borderRadius:"var(--rs)",minWidth:140}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:4}}>VP flujos proyectados</div><div style={{fontSize:20,fontWeight:600,color:"var(--blue)"}}>{fmtM(r.sumPvFcf)}</div><div style={{fontSize:11,color:"var(--ink3)",marginTop:4}}>Años 1-{PROJECTION_YEARS}</div></div>
+          <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>+</span>
+          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--amberS)",borderRadius:"var(--rs)",minWidth:140}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:4}}>VP valor terminal</div><div style={{fontSize:20,fontWeight:600,color:"var(--amber)"}}>{fmtM(r.pvTerminal)}</div><div style={{fontSize:11,color:"var(--ink3)",marginTop:4}}>Año {PROJECTION_YEARS}+</div></div>
+          <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>=</span>
+          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--navy)",borderRadius:"var(--rs)",minWidth:140}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:4}}>Valor Compañía (DCF)</div><div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{fmtM(r.evDcf)}</div></div>
+        </div>
       </div>
 
       {/* Valuation bridge */}
       <div className="r-sec">
         <h3>Puente de valoración</h3>
+        <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>El valor de las participaciones se obtiene restando la deuda financiera neta del valor de la compañía. Si la empresa tiene más caja que deuda, este importe se suma al valor.</p>
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,flexWrap:"wrap",padding:"16px 0"}}>
           <div style={{textAlign:"center",padding:"12px 20px",background:"var(--blueS)",borderRadius:"var(--rs)"}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:2}}>Valor Compañía</div><div style={{fontSize:20,fontWeight:600,color:"var(--blue)"}}>{fmtM(r.evBlended)}</div></div>
           <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>{r.dfn>0?"−":"+"}</span>
