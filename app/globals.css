@@ -148,6 +148,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
 .m-tbl th{text-align:left;font-size:12px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;border-bottom:2px solid var(--brd)}
 .m-tbl td{padding:12px;font-size:15px;color:var(--ink);border-bottom:1px solid var(--brd)}
 .m-tbl tr:last-child td{border-bottom:none;font-weight:600}
+.m-tbl.dcf-tbl tr:last-child td{font-weight:400}
 
 .discl{background:var(--amberS);border-radius:var(--rs);padding:16px 20px;margin-top:28px;font-size:13px;color:var(--amber);line-height:1.5}.discl strong{font-weight:700}
 

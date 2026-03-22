@@ -178,7 +178,7 @@ function CompanyAnalysis({data}){
     const prompt=`Eres un analista de valoración de empresas. Genera un análisis cualitativo breve y profesional de la siguiente empresa. Responde SOLO con un JSON válido, sin backticks ni markdown.
 Datos: Nombre: ${data.name||"No proporcionado"}, Web: ${data.website||"No proporcionada"}, Sector: ${sector?.label||"No especificado"}, Fundación: ${data.founded||"No proporcionado"}, Empleados: ${data.employees||"No proporcionado"}, Provincia: ${data.province||"No proporcionada"}, Facturación: ${pE(data.revenue).toLocaleString("es-ES")}€
 Genera JSON con: {"descripcion":"2-4 frases","historia":"2-4 frases","modelo":"2-4 frases","oferta":"2-4 frases","geografia":"2-4 frases","metricas":"2-4 frases"} Todo en español. Si no conoces la empresa, genera análisis plausible basado en sector y tamaño.`;
-    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})})
+    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})})
     .then(r=>r.json()).then(d=>{
       const txt=d.content?.map(i=>i.text||"").join("")||"";
       try{setAnalysis(JSON.parse(txt.replace(/```json|```/g,"").trim()))}catch(e){setError("No se pudo generar el análisis.")}
@@ -281,7 +281,7 @@ function StepResults({data,onBack,onHome}){
       <div className="r-sec">
         <h3>Quality Score · Análisis detallado</h3>
         <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>El Quality Score evalúa 10 características cualitativas de tu empresa que influyen directamente en su valor. Cada factor recibe una puntuación de 0 a 100, ponderada según su impacto en la valoración.</p>
-        <div>{qualDetails.map((d,i)=><div key={i} style={{marginBottom:16,paddingBottom:i<qualDetails.length-1?16:0,borderBottom:i<qualDetails.length-1?"1px solid var(--brd)":"none"}}><div className="sc-row"><span className="sc-lbl">{d.label}</span><div className="sc-bg"><div className="sc-fill" style={{width:d.score+"%",background:d.color}}/></div><span className="sc-val">{d.score}</span></div>{d.optionIndex!==undefined&&<p style={{fontSize:13,color:"var(--ink3)",lineHeight:1.55,margin:"6px 0 0",paddingLeft:142}}>{getQualExplanation(d.id,d.optionIndex)}</p>}</div>)}</div>
+        <div>{qualDetails.map((d,i)=><div key={i} style={{marginBottom:16,paddingBottom:i<qualDetails.length-1?16:0,borderBottom:i<qualDetails.length-1?"1px solid var(--brd)":"none"}}><div className="sc-row"><span className="sc-lbl">{d.label}</span><div className="sc-bg"><div className="sc-fill" style={{width:d.score+"%",background:d.color}}/></div><span className="sc-val">{d.score}</span></div>{d.optionIndex!==undefined&&d.score>0&&<p style={{fontSize:13,color:"var(--ink3)",lineHeight:1.55,margin:"6px 0 0",paddingLeft:142}}>{getQualExplanation(d.id,d.optionIndex)}</p>}{(d.optionIndex===undefined||d.score===0)&&<p style={{fontSize:13,color:"var(--ink3)",lineHeight:1.55,margin:"6px 0 0",paddingLeft:142,fontStyle:"italic"}}>No se ha proporcionado información sobre este factor.</p>}</div>)}</div>
         <div style={{marginTop:16,padding:"12px 16px",background:"var(--bg)",borderRadius:"var(--rs)",fontSize:13,color:"var(--ink2)"}}>
           <strong>Interpretación:</strong> Tu Quality Score de <strong style={{color:scoreColor}}>{r.qualScore}/100</strong> sitúa tu empresa en el <strong>percentil {Math.round(r.percentile*100)}</strong> del rango de valoración de tu sector. {r.qualScore>=70?"Tu empresa muestra fortalezas significativas que justifican una valoración por encima de la mediana.":r.qualScore>=40?"Tu empresa se sitúa en la zona media del rango. Hay margen de mejora en varios factores.":"Tu empresa presenta áreas de riesgo que presionan la valoración a la baja. Mejorar estos factores podría aumentar significativamente el valor."}
         </div>
@@ -291,7 +291,7 @@ function StepResults({data,onBack,onHome}){
       <div className="r-sec">
         <h3>Hipótesis del modelo financiero (DCF)</h3>
         <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>El método de Descuento de Flujos de Caja (DCF) estima cuánto vale tu empresa hoy en función del dinero que generará en el futuro. Proyectamos los beneficios operativos a {PROJECTION_YEARS} años y los traemos a valor presente aplicando una tasa de descuento que refleja el riesgo de tu negocio.</p>
-        <table className="m-tbl">
+        <table className="m-tbl dcf-tbl">
           <thead><tr><th>Parámetro</th><th>Valor</th><th>Qué significa</th></tr></thead>
           <tbody>
             <tr><td><strong>EBITDA calculado</strong></td><td>{fmtM(r.ebitda)}</td><td style={{fontSize:13,color:"var(--ink3)"}}>Resultado de explotación + amortización. Es el beneficio operativo antes de intereses, impuestos y amortizaciones.</td></tr>
@@ -309,11 +309,11 @@ function StepResults({data,onBack,onHome}){
         <h3>Composición del valor por DCF</h3>
         <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>El valor de la compañía por DCF se compone de dos elementos: el valor presente de los flujos de caja de los próximos {PROJECTION_YEARS} años, y el valor terminal que representa todos los flujos futuros a partir de ese momento.</p>
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,flexWrap:"wrap",padding:"16px 0"}}>
-          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--blueS)",borderRadius:"var(--rs)",minWidth:140}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:4}}>VP flujos proyectados</div><div style={{fontSize:20,fontWeight:600,color:"var(--blue)"}}>{fmtM(r.sumPvFcf)}</div><div style={{fontSize:11,color:"var(--ink3)",marginTop:4}}>Años 1-{PROJECTION_YEARS}</div></div>
+          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--blueS)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:4}}>VP flujos proyectados</div><div style={{fontSize:20,fontWeight:600,color:"var(--blue)"}}>{fmtM(r.sumPvFcf)}</div><div style={{fontSize:11,color:"var(--ink3)",marginTop:4}}>Años 1-{PROJECTION_YEARS}</div></div>
           <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>+</span>
-          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--amberS)",borderRadius:"var(--rs)",minWidth:140}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:4}}>VP valor terminal</div><div style={{fontSize:20,fontWeight:600,color:"var(--amber)"}}>{fmtM(r.pvTerminal)}</div><div style={{fontSize:11,color:"var(--ink3)",marginTop:4}}>Año {PROJECTION_YEARS}+</div></div>
+          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--amberS)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:4}}>VP valor terminal</div><div style={{fontSize:20,fontWeight:600,color:"var(--amber)"}}>{fmtM(r.pvTerminal)}</div><div style={{fontSize:11,color:"var(--ink3)",marginTop:4}}>Año {PROJECTION_YEARS}+</div></div>
           <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>=</span>
-          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--navy)",borderRadius:"var(--rs)",minWidth:140}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:4}}>Valor Compañía (DCF)</div><div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{fmtM(r.evDcf)}</div></div>
+          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--navy)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:4}}>Valor Compañía (DCF)</div><div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{fmtM(r.evDcf)}</div></div>
         </div>
       </div>
 
@@ -330,12 +330,23 @@ function StepResults({data,onBack,onHome}){
         </div>
       </div>
 
-      {/* Download button placeholder */}
+      {/* Download button */}
       <div style={{textAlign:"center",margin:"28px 0"}}>
         <button className="btn btn-p" style={{padding:"14px 36px",fontSize:16}} onClick={()=>alert("La generación de PDF estará disponible próximamente.")}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
           Descargar informe PDF
         </button>
+      </div>
+
+      {/* Upgrade to Professional */}
+      <div style={{background:"var(--bg)",border:"1.5px solid var(--brd)",borderRadius:"var(--r)",padding:"28px 32px",textAlign:"center",margin:"8px 0 28px"}}>
+        <p style={{fontSize:13,color:"var(--ink3)",textTransform:"uppercase",letterSpacing:1.5,fontWeight:600,marginBottom:8}}>¿Quieres ir más allá?</p>
+        <h3 style={{fontFamily:"'Instrument Serif',serif",fontSize:22,marginBottom:8,color:"var(--ink)"}}>Upgrade al Informe Profesional</h3>
+        <p style={{fontSize:15,color:"var(--ink2)",lineHeight:1.6,marginBottom:20,maxWidth:500,margin:"0 auto 20px"}}>Incluye análisis de sensibilidad, benchmarking sectorial, recomendaciones de creación de valor y revisión por un analista experto.</p>
+        <button className="pw-btn pw-btn-p" style={{fontSize:16,padding:"13px 32px"}} onClick={()=>alert("Próximamente disponible. Te notificaremos a " + (data.contactEmail||"tu email") + " cuando esté listo.")}>
+          Upgrade por solo 150€ + IVA
+        </button>
+        <p style={{fontSize:12,color:"var(--ink3)",marginTop:10}}>Diferencia de precio respecto al plan Esencial. Entrega en 24-48h.</p>
       </div>
     </>}
 
