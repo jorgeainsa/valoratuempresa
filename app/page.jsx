@@ -239,30 +239,121 @@ function StepResults({data,onBack,onHome}){
     function bT(t){doc.setFontSize(9.5);doc.setTextColor(I2);doc.setFont("helvetica","normal");const l=doc.splitTextToSize(t,CW);y=ck(l.length*4.5);doc.text(l,M,y);y+=l.length*4.5+2}
     function box3(x,yy,bg,lbl,val,lc,vc){doc.setFillColor(bg);doc.roundedRect(x,yy,bbW,bh,2,2,"F");doc.setFontSize(7);doc.setTextColor(lc);doc.text(lbl,x+bbW/2,yy+6,{align:"center"});doc.setFontSize(12);doc.setTextColor(vc);doc.setFont("helvetica","bold");doc.text(val,x+bbW/2,yy+14,{align:"center"});doc.setFont("helvetica","normal")}
     function sign(x,yy,t){doc.setFontSize(16);doc.setTextColor(GY);doc.setFont("helvetica","normal");doc.text(t,x,yy+12,{align:"center"})}
-    // Cover
-    doc.setFillColor(NY);doc.rect(0,0,W,H,"F");doc.setFontSize(16);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");doc.text("valoratuempresa.es",M,50);doc.setDrawColor(BL);doc.setLineWidth(0.8);doc.line(M,55,W-M,55);doc.setFontSize(28);doc.text("Informe de Valoraci\u00f3n",M,75);doc.setFontSize(22);doc.text("Esencial",M,87);doc.setFontSize(12);doc.setFont("helvetica","normal");doc.setTextColor("#8899bb");doc.text(data.name||"Empresa",M,110);doc.text(r.sector.label,M,118);doc.text((data.province||"Espa\u00f1a")+", "+new Date().toLocaleDateString("es-ES",{month:"long",year:"numeric"}),M,126);doc.setFontSize(9);doc.setTextColor("#556688");doc.text("Preparado por SP Financial Advisory LLC",M,H-30);doc.text("Documento confidencial",M,H-24);
-    // Page 2: Summary
-    doc.addPage();y=25;doc.setFillColor(NY);doc.roundedRect(M,y,CW,45,3,3,"F");doc.setFontSize(9);doc.setTextColor("#8899bb");doc.text("VALOR DE LAS PARTICIPACIONES (EQUITY VALUE)",W/2,y+12,{align:"center"});doc.setFontSize(26);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");doc.text(fmtM(r.eqBlended),W/2,y+28,{align:"center"});doc.setFontSize(11);doc.setFont("helvetica","normal");doc.setTextColor("#8899bb");doc.text("Rango: "+fmtM(r.eqLow)+" \u2013 "+fmtM(r.eqHigh),W/2,y+38,{align:"center"});y+=55;
-    const mt=[{l:"Valor Compa\u00f1\u00eda (EV)",v:fmtM(r.evBlended)},{l:"Deuda Financiera Neta",v:fmtM(r.dfn)},{l:"M\u00faltiplo aplicado",v:r.selectedMult.toFixed(1)+"x"},{l:"Quality Score",v:r.qualScore+"/100"}];const bw=(CW-6)/2;mt.forEach((m,i)=>{const col=i%2,row=Math.floor(i/2),bx=M+col*(bw+6),by=y+row*(bh+4);doc.setFillColor("#f0f4fa");doc.roundedRect(bx,by,bw,bh,2,2,"F");doc.setFontSize(7.5);doc.setTextColor(GY);doc.text(m.l,bx+4,by+6);doc.setFontSize(12);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(m.v,bx+4,by+14);doc.setFont("helvetica","normal")});y+=2*(bh+4)+10;
-    // Company Analysis
-    if(companyAnalysis){sT("An\u00e1lisis de la compa\u00f1\u00eda");[{t:"Descripci\u00f3n del negocio",v:companyAnalysis.descripcion},{t:"Historia y trayectoria",v:companyAnalysis.historia},{t:"Modelo de negocio",v:companyAnalysis.modelo},{t:"Oferta de productos/servicios",v:companyAnalysis.oferta},{t:"Presencia geogr\u00e1fica",v:companyAnalysis.geografia},{t:"M\u00e9tricas operativas clave",v:companyAnalysis.metricas}].forEach(f=>{if(!f.v)return;y=ck(16);doc.setFontSize(9.5);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(f.t,M,y);y+=5;doc.setFont("helvetica","normal");doc.setTextColor(I2);const l=doc.splitTextToSize(f.v,CW);y=ck(l.length*4.2);doc.text(l,M,y);y+=l.length*4.2+4})}
-    // Methodology
-    sT("Desglose por metodolog\u00eda");bT("Para determinar el valor de "+(data.name||"la empresa")+", se han aplicado dos metodolog\u00edas: m\u00faltiplos de mercado (60%) y descuento de flujos de caja (20%), con un ajuste cualitativo (20%).");
-    y=ck(35);let tx=M;doc.setFillColor(NY);doc.rect(M,y,CW,7,"F");doc.setFontSize(7.5);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");["M\u00e9todo","Valor Comp.","Valor Partic.","Peso"].forEach((h,i)=>{doc.text(h,tx+2,y+5);tx+=[50,40,48,24][i]});y+=7;doc.setFont("helvetica","normal");doc.setTextColor(IK);doc.setFontSize(9);
-    [["M\u00faltiplos comparables",fmtM(r.evMultiples),fmtM(r.eqMultiples),"60%"],["DCF simplificado",fmtM(r.evDcf),fmtM(r.eqDcf),"20%"],["Ajuste cualitativo","","Score "+r.qualScore+"/100","20%"],["Valoraci\u00f3n ponderada",fmtM(r.evBlended),fmtM(r.eqBlended),"100%"]].forEach((rw,ri)=>{tx=M;if(ri===3)doc.setFont("helvetica","bold");if(ri%2===0){doc.setFillColor("#f7f8fb");doc.rect(M,y,CW,7,"F")}rw.forEach((c,ci)=>{doc.text(c,tx+2,y+5);tx+=[50,40,48,24][ci]});y+=7;doc.setFont("helvetica","normal")});y+=6;
-    // Bridge
-    y=ck(25);sT("Puente de valoraci\u00f3n");box3(sx,y,"#e8eefb","Valor Compa\u00f1\u00eda",fmtM(r.evBlended),GY,BL);sign(sx+bbW+gap/2,y,r.dfn>0?"\u2212":"+");box3(sx+bbW+gap,y,r.dfn>0?"#fee2e2":"#e6f7ed","Deuda Fin. Neta",fmtM(Math.abs(r.dfn)),GY,r.dfn>0?RD:GR);sign(sx+2*bbW+1.5*gap,y,"=");box3(sx+2*(bbW+gap),y,NY,"Valor Participaciones",fmtM(r.eqBlended),"#8899bb","#ffffff");y+=bh+10;
-    // Quality Score
-    sT("Quality Score");bT("Puntuaci\u00f3n global: "+r.qualScore+"/100 (percentil "+Math.round(r.percentile*100)+").");qualDetails.forEach(d=>{y=ck(14);doc.setFontSize(9);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(d.label,M,y);doc.text(d.score+"/100",M+CW,y,{align:"right"});y+=3;doc.setFillColor("#f0f4fa");doc.roundedRect(M,y,CW,3,1,1,"F");doc.setFillColor(d.score>=70?GR:d.score>=40?BL:AM);if(d.score>0)doc.roundedRect(M,y,CW*d.score/100,3,1,1,"F");y+=5;const ex=getQualExplanation(d.id,d.optionIndex);if(ex&&d.score>0){doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(GY);const l=doc.splitTextToSize(ex,CW);y=ck(l.length*3.5);doc.text(l,M,y);y+=l.length*3.5+2}y+=2});
-    // DCF
-    sT("Hip\u00f3tesis del modelo financiero (DCF)");bT("Estima el valor en funci\u00f3n del dinero que generar\u00e1 la empresa en el futuro, descontado a valor presente.");y=ck(50);tx=M;doc.setFillColor(NY);doc.rect(M,y,CW,7,"F");doc.setFontSize(7.5);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");doc.text("Par\u00e1metro",M+2,y+5);doc.text("Valor",M+55,y+5);doc.text("Descripci\u00f3n",M+95,y+5);y+=7;doc.setFont("helvetica","normal");
-    [["EBITDA",fmtM(r.ebitda),"Res. explotaci\u00f3n + amortizaci\u00f3n"],["Crecimiento",fmtPct(r.cappedGrowth)+"\u2192"+fmtPct(TERMINAL_GROWTH),"Basado en hist\u00f3rico"],["WACC",fmtPct(r.wacc),"Tasa de descuento"],["Impuestos",fmtPct(TAX_RATE),"IS Espa\u00f1a"],["g terminal",fmtPct(TERMINAL_GROWTH),"Crecimiento perpetuo"],["Proyecci\u00f3n",PROJECTION_YEARS+" a\u00f1os","Horizonte expl\u00edcito"]].forEach((rw,ri)=>{if(ri%2===0){doc.setFillColor("#f7f8fb");doc.rect(M,y,CW,7,"F")}doc.setFontSize(8.5);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(rw[0],M+2,y+5);doc.setFont("helvetica","normal");doc.text(rw[1],M+55,y+5);doc.setFontSize(7.5);doc.setTextColor(GY);doc.text(rw[2],M+95,y+5);y+=7});y+=6;
-    // DCF composition
-    y=ck(30);sT("Composici\u00f3n del valor por DCF");box3(sx,y,"#e8eefb","VP flujos proyectados",fmtM(r.sumPvFcf),GY,BL);sign(sx+bbW+gap/2,y,"+");box3(sx+bbW+gap,y,"#fef6e7","VP valor terminal",fmtM(r.pvTerminal),GY,AM);sign(sx+2*bbW+1.5*gap,y,"=");box3(sx+2*(bbW+gap),y,NY,"Valor Compa\u00f1\u00eda (DCF)",fmtM(r.evDcf),"#8899bb","#ffffff");y+=bh+10;
+    function donut(cx,cy,radius,pct,color){const bg="#e4e8f1";const startAngle=-Math.PI/2;const endAngle=startAngle+2*Math.PI*(pct/100);doc.setDrawColor(bg);doc.setLineWidth(2.5);for(let a=0;a<2*Math.PI;a+=0.05){const x1=cx+radius*Math.cos(a),y1=cy+radius*Math.sin(a),x2=cx+radius*Math.cos(a+0.05),y2=cy+radius*Math.sin(a+0.05);doc.line(x1,y1,x2,y2)}doc.setDrawColor(color);doc.setLineWidth(2.5);if(pct>0){for(let a=startAngle;a<endAngle;a+=0.05){const ae=Math.min(a+0.05,endAngle);const x1=cx+radius*Math.cos(a),y1=cy+radius*Math.sin(a),x2=cx+radius*Math.cos(ae),y2=cy+radius*Math.sin(ae);doc.line(x1,y1,x2,y2)}}doc.setFontSize(9);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(pct+"%",cx,cy+3,{align:"center"});doc.setFont("helvetica","normal")}
+
+    // ═══ COVER ═══
+    doc.setFillColor(NY);doc.rect(0,0,W,H,"F");
+    doc.setFontSize(16);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");doc.text("valoratuempresa.es",M,50);
+    doc.setDrawColor(BL);doc.setLineWidth(0.8);doc.line(M,55,W-M,55);
+    doc.setFontSize(28);doc.text("Informe de Valoraci\u00f3n",M,75);
+    doc.setFontSize(22);doc.text("Esencial",M,87);
+    // Company name bigger
+    doc.setFontSize(26);doc.setTextColor("#ffffff");doc.text(data.name||"Empresa",M,115);
+    doc.setFontSize(14);doc.setFont("helvetica","normal");doc.setTextColor("#8899bb");
+    doc.text(r.sector.label,M,128);
+    doc.text((data.province||"Espa\u00f1a")+", "+new Date().toLocaleDateString("es-ES",{month:"long",year:"numeric"}),M,138);
+    doc.setFontSize(9);doc.setTextColor("#556688");
+    doc.text("Preparado por SP Financial Advisory LLC",M,H-30);
+    doc.text("Documento confidencial",M,H-24);
+
+    // ═══ INDEX ═══
+    doc.addPage();y=30;
+    doc.setFontSize(20);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text("\u00cdndice",M,y);y+=12;
+    doc.setDrawColor(BL);doc.setLineWidth(0.5);doc.line(M,y,W-M,y);y+=12;
+    const tocItems=[
+      {n:"1",t:"Valoraci\u00f3n"},
+      {n:"2",t:"An\u00e1lisis de la Compa\u00f1\u00eda"},
+      {n:"3",t:"Desglose por Metodolog\u00eda & Puente de Valoraci\u00f3n"},
+      {n:"4",t:"Quality Score"},
+      {n:"5",t:"Hip\u00f3tesis del Modelo Financiero & Composici\u00f3n DCF"},
+    ];
+    tocItems.forEach(item=>{
+      doc.setFontSize(11);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text(item.n+".",M,y);
+      doc.setTextColor(IK);doc.text(item.t,M+10,y);
+      y+=10;
+    });
+
+    // ═══ SECTION 1: VALORACIÓN ═══
+    doc.addPage();y=25;
+    doc.setFontSize(9);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("1. VALORACI\u00d3N",M,y);y+=8;
+    doc.setFillColor(NY);doc.roundedRect(M,y,CW,45,3,3,"F");
+    doc.setFontSize(9);doc.setTextColor("#8899bb");doc.text("VALOR DE LAS PARTICIPACIONES (EQUITY VALUE)",W/2,y+12,{align:"center"});
+    doc.setFontSize(26);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");doc.text(fmtM(r.eqBlended),W/2,y+28,{align:"center"});
+    doc.setFontSize(11);doc.setFont("helvetica","normal");doc.setTextColor("#8899bb");doc.text("Rango: "+fmtM(r.eqLow)+" \u2013 "+fmtM(r.eqHigh),W/2,y+38,{align:"center"});
+    y+=55;
+    const mt=[{l:"Valor Compa\u00f1\u00eda (EV)",v:fmtM(r.evBlended)},{l:"Deuda Financiera Neta",v:fmtM(r.dfn)},{l:"M\u00faltiplo aplicado",v:r.selectedMult.toFixed(1)+"x"},{l:"Quality Score",v:r.qualScore+"/100"}];
+    const bw=(CW-6)/2;mt.forEach((m,i)=>{const col=i%2,row=Math.floor(i/2),bx=M+col*(bw+6),by=y+row*(bh+4);doc.setFillColor("#f0f4fa");doc.roundedRect(bx,by,bw,bh,2,2,"F");doc.setFontSize(7.5);doc.setTextColor(GY);doc.text(m.l,bx+4,by+6);doc.setFontSize(12);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(m.v,bx+4,by+14);doc.setFont("helvetica","normal")});
+    y+=2*(bh+4)+10;
+
+    // ═══ SECTION 2: ANÁLISIS COMPAÑÍA ═══
+    doc.addPage();y=25;
+    doc.setFontSize(9);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("2. AN\u00c1LISIS DE LA COMPA\u00d1\u00cdA",M,y);y+=8;
+    if(companyAnalysis){
+      [{t:"Descripci\u00f3n del negocio",v:companyAnalysis.descripcion},{t:"Historia y trayectoria",v:companyAnalysis.historia},{t:"Modelo de negocio",v:companyAnalysis.modelo},{t:"Oferta de productos/servicios",v:companyAnalysis.oferta},{t:"Presencia geogr\u00e1fica",v:companyAnalysis.geografia},{t:"M\u00e9tricas operativas clave",v:companyAnalysis.metricas}].forEach(f=>{
+        if(!f.v)return;y=ck(16);doc.setFontSize(10);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(f.t,M,y);y+=5.5;
+        doc.setFont("helvetica","normal");doc.setTextColor(I2);doc.setFontSize(9.5);const l=doc.splitTextToSize(f.v,CW);y=ck(l.length*4.2);doc.text(l,M,y);y+=l.length*4.2+5;
+      });
+    }else{doc.setFontSize(10);doc.setTextColor(GY);doc.text("An\u00e1lisis no disponible.",M,y);y+=10}
+
+    // ═══ SECTION 3: METODOLOGÍA & PUENTE ═══
+    doc.addPage();y=25;
+    doc.setFontSize(9);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("3. DESGLOSE POR METODOLOG\u00cdA & PUENTE DE VALORACI\u00d3N",M,y);y+=10;
+    sT("Desglose por metodolog\u00eda");
+    bT("Para determinar el valor de "+(data.name||"la empresa")+", se han aplicado dos metodolog\u00edas: m\u00faltiplos de mercado (60%) y descuento de flujos de caja (20%), con un ajuste cualitativo (20%).");
+    y=ck(35);let tx=M;doc.setFillColor(NY);doc.rect(M,y,CW,7,"F");doc.setFontSize(7.5);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");
+    ["M\u00e9todo","Valor Comp.","Valor Partic.","Peso"].forEach((h,i)=>{doc.text(h,tx+2,y+5);tx+=[50,40,48,24][i]});y+=7;doc.setFont("helvetica","normal");doc.setTextColor(IK);doc.setFontSize(9);
+    [["M\u00faltiplos comparables",fmtM(r.evMultiples),fmtM(r.eqMultiples),"60%"],["DCF simplificado",fmtM(r.evDcf),fmtM(r.eqDcf),"20%"],["Ajuste cualitativo","","Score "+r.qualScore+"/100","20%"],["Valoraci\u00f3n ponderada",fmtM(r.evBlended),fmtM(r.eqBlended),"100%"]].forEach((rw,ri)=>{tx=M;if(ri===3)doc.setFont("helvetica","bold");if(ri%2===0){doc.setFillColor("#f7f8fb");doc.rect(M,y,CW,7,"F")}rw.forEach((c,ci)=>{doc.text(c,tx+2,y+5);tx+=[50,40,48,24][ci]});y+=7;doc.setFont("helvetica","normal")});y+=10;
+    sT("Puente de valoraci\u00f3n");y=ck(25);
+    box3(sx,y,"#e8eefb","Valor Compa\u00f1\u00eda",fmtM(r.evBlended),GY,BL);sign(sx+bbW+gap/2,y,r.dfn>0?"\u2212":"+");box3(sx+bbW+gap,y,r.dfn>0?"#fee2e2":"#e6f7ed","Deuda Fin. Neta",fmtM(Math.abs(r.dfn)),GY,r.dfn>0?RD:GR);sign(sx+2*bbW+1.5*gap,y,"=");box3(sx+2*(bbW+gap),y,NY,"Valor Participaciones",fmtM(r.eqBlended),"#8899bb","#ffffff");y+=bh+10;
+
+    // ═══ SECTION 4: QUALITY SCORE WITH DONUTS ═══
+    doc.addPage();y=25;
+    doc.setFontSize(9);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("4. QUALITY SCORE",M,y);y+=10;
+    doc.setFontSize(11);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text("Puntuaci\u00f3n global: "+r.qualScore+"/100",M,y);
+    doc.setFont("helvetica","normal");doc.setFontSize(9.5);doc.setTextColor(I2);doc.text("  (percentil "+Math.round(r.percentile*100)+")",M+55,y);y+=10;
+
+    // Grid of donuts: 2 columns x 5 rows
+    const colW=CW/2;const donutR=9;const rowH=38;
+    qualDetails.forEach((d,i)=>{
+      const col=i%2;const rowIdx=Math.floor(i/2);
+      if(col===0)y=ck(rowH);
+      const cx=M+col*colW+donutR+2;
+      const cy=y+donutR;
+      const clr=d.score>=70?GR:d.score>=40?BL:AM;
+      donut(cx,cy,donutR,d.score,clr);
+      // Label and explanation
+      const textX=cx+donutR+6;const textW=colW-donutR*2-12;
+      doc.setFontSize(10);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(d.label,textX,cy-5);
+      doc.setFontSize(8);doc.setTextColor(GY);doc.setFont("helvetica","normal");doc.text(d.score+"/100",textX,cy);
+      const ex=getQualExplanation(d.id,d.optionIndex);
+      if(ex&&d.score>0){
+        doc.setFontSize(8);doc.setTextColor(I2);
+        const lines=doc.splitTextToSize(ex,textW);
+        doc.text(lines.slice(0,3),textX,cy+5);
+      }
+      if(col===1)y+=rowH;
+    });
+    if(qualDetails.length%2===1)y+=rowH;
+
+    // ═══ SECTION 5: DCF & COMPOSITION ═══
+    doc.addPage();y=25;
+    doc.setFontSize(9);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("5. HIP\u00d3TESIS DEL MODELO FINANCIERO & COMPOSICI\u00d3N DCF",M,y);y+=10;
+    sT("Hip\u00f3tesis del modelo financiero (DCF)");
+    bT("Estima el valor en funci\u00f3n del dinero que generar\u00e1 la empresa en el futuro, descontado a valor presente.");
+    y=ck(50);tx=M;doc.setFillColor(NY);doc.rect(M,y,CW,7,"F");doc.setFontSize(7.5);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");
+    doc.text("Par\u00e1metro",M+2,y+5);doc.text("Valor",M+55,y+5);doc.text("Descripci\u00f3n",M+95,y+5);y+=7;doc.setFont("helvetica","normal");
+    [["EBITDA",fmtM(r.ebitda),"Res. explotaci\u00f3n + amortizaci\u00f3n"],["Crecimiento",fmtPct(r.cappedGrowth)+"\u2192"+fmtPct(TERMINAL_GROWTH),"Basado en hist\u00f3rico"],["WACC",fmtPct(r.wacc),"Tasa de descuento"],["Impuestos",fmtPct(TAX_RATE),"IS Espa\u00f1a"],["g terminal",fmtPct(TERMINAL_GROWTH),"Crecimiento perpetuo"],["Proyecci\u00f3n",PROJECTION_YEARS+" a\u00f1os","Horizonte expl\u00edcito"]].forEach((rw,ri)=>{if(ri%2===0){doc.setFillColor("#f7f8fb");doc.rect(M,y,CW,7,"F")}doc.setFontSize(8.5);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(rw[0],M+2,y+5);doc.setFont("helvetica","normal");doc.text(rw[1],M+55,y+5);doc.setFontSize(7.5);doc.setTextColor(GY);doc.text(rw[2],M+95,y+5);y+=7});y+=10;
+
+    sT("Composici\u00f3n del valor por DCF");y=ck(30);
+    box3(sx,y,"#e8eefb","VP flujos proyectados",fmtM(r.sumPvFcf),GY,BL);sign(sx+bbW+gap/2,y,"+");
+    box3(sx+bbW+gap,y,"#fef6e7","VP valor terminal",fmtM(r.pvTerminal),GY,AM);sign(sx+2*bbW+1.5*gap,y,"=");
+    box3(sx+2*(bbW+gap),y,NY,"Valor Compa\u00f1\u00eda (DCF)",fmtM(r.evDcf),"#8899bb","#ffffff");y+=bh+10;
+
     // Disclaimer
     y=ck(15);doc.setFillColor("#fef6e7");doc.roundedRect(M,y,CW,12,2,2,"F");doc.setFontSize(7.5);doc.setTextColor(AM);doc.setFont("helvetica","bold");doc.text("Aviso legal:",M+4,y+5);doc.setFont("helvetica","normal");doc.text("Esta valoraci\u00f3n tiene car\u00e1cter indicativo y orientativo.",M+24,y+5);doc.text("Para una valoraci\u00f3n vinculante, contratar un asesor profesional.",M+4,y+9);
-    // Footers
-    const tp=doc.getNumberOfPages();for(let i=1;i<=tp;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(GY);doc.text("valoratuempresa.es",W/2,H-10,{align:"center"});doc.text("P\u00e1g. "+i+"/"+tp,W-M,H-10,{align:"right"})}
+
+    // Footers on all pages
+    const tp=doc.getNumberOfPages();for(let i=1;i<=tp;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(GY);doc.text("valoratuempresa.es \u00b7 SP Financial Advisory LLC",W/2,H-10,{align:"center"});doc.text("P\u00e1g. "+i+"/"+tp,W-M,H-10,{align:"right"})}
     doc.save("Valoracion_"+(data.name||"empresa").replace(/[^a-zA-Z0-9]/g,"_")+"_"+new Date().toISOString().slice(0,10)+".pdf");
     setPdfLoading(false);
   }
