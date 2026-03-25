@@ -345,7 +345,7 @@ function SensibilityAnalysis({r}){
 }
 
 function StepResults({data,onBack,onHome}){
-  const[plan,setPlan]=useState("free");
+  const[plan,setPlan]=useState("free");const planRef=useRef("free");
   const[pdfLoading,setPdfLoading]=useState(false);
   const[companyAnalysis,setCompanyAnalysis]=useState(null);
   const[professionalAnalysis,setProfessionalAnalysis]=useState(null);
@@ -359,11 +359,12 @@ function StepResults({data,onBack,onHome}){
 
   const generatePDF=()=>{
     setPdfLoading(true);
-    if(window.jspdf){buildPDFDoc();return}
+    const run=()=>{try{buildPDFDoc()}catch(e){console.error("PDF error:",e);alert("Error generando PDF: "+e.message);setPdfLoading(false)}};
+    if(window.jspdf){setTimeout(run,50);return}
     const s=document.createElement("script");
     s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
-    s.onload=()=>buildPDFDoc();
-    s.onerror=()=>{alert("Error cargando PDF");setPdfLoading(false)};
+    s.onload=()=>setTimeout(run,50);
+    s.onerror=()=>{alert("Error cargando jsPDF");setPdfLoading(false)};
     document.head.appendChild(s);
   };
   function buildPDFDoc(){const professionalAnalysis=professionalAnalysisRef.current;const companyAnalysis=companyAnalysisRef.current;
@@ -378,7 +379,7 @@ function StepResults({data,onBack,onHome}){
     function sign(x,yy,t){doc.setFontSize(16);doc.setTextColor(GY);doc.setFont("helvetica","normal");doc.text(t,x,yy+12,{align:"center"})}
     function donut(cx,cy,radius,pct,color){const bg="#e4e8f1";const startAngle=-Math.PI/2;const endAngle=startAngle+2*Math.PI*(pct/100);doc.setDrawColor(bg);doc.setLineWidth(2.5);for(let a=0;a<2*Math.PI;a+=0.05){const x1=cx+radius*Math.cos(a),y1=cy+radius*Math.sin(a),x2=cx+radius*Math.cos(a+0.05),y2=cy+radius*Math.sin(a+0.05);doc.line(x1,y1,x2,y2)}doc.setDrawColor(color);doc.setLineWidth(2.5);if(pct>0){for(let a=startAngle;a<endAngle;a+=0.05){const ae=Math.min(a+0.05,endAngle);const x1=cx+radius*Math.cos(a),y1=cy+radius*Math.sin(a),x2=cx+radius*Math.cos(ae),y2=cy+radius*Math.sin(ae);doc.line(x1,y1,x2,y2)}}doc.setFontSize(10);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(pct+"%",cx,cy+1,{align:"center"});doc.setFont("helvetica","normal")}
 
-    const isPro=plan==="professional";
+    const isPro=planRef.current==="professional";
 
     // ═══ COVER ═══
     doc.setFillColor(NY);doc.rect(0,0,W,H,"F");
@@ -629,8 +630,8 @@ function StepResults({data,onBack,onHome}){
         <h3>Desbloquea el informe completo</h3>
         <p>Obtén el desglose detallado por metodología, Quality Score por cada factor, hipótesis del DCF y descarga tu informe en PDF.</p>
         <div className="paywall-btns">
-          <button className="pw-btn pw-btn-p" onClick={()=>setPlan("essential")}>Informe Esencial · 149€ + IVA</button>
-          <button className="pw-btn pw-btn-o" onClick={()=>setPlan("professional")}>Informe Profesional · 299€ + IVA</button>
+          <button className="pw-btn pw-btn-p" onClick={()=>{setPlan("essential");planRef.current="essential";}}>Informe Esencial · 149€ + IVA</button>
+          <button className="pw-btn pw-btn-o" onClick={()=>{setPlan("professional");planRef.current="professional";}}>Informe Profesional · 299€ + IVA</button>
         </div>
         <p style={{fontSize:12,color:"var(--ink3)",marginTop:14}}>De momento, el pago no está activado. Haz clic para previsualizar el informe.</p>
       </div>
@@ -744,7 +745,7 @@ function StepResults({data,onBack,onHome}){
         <div style={{display:"flex",justifyContent:"center",gap:20,flexWrap:"wrap",marginBottom:20,fontSize:14,color:"rgba(255,255,255,0.75)"}}>
           <span>✓ Análisis de sensibilidad</span><span>✓ Benchmarking sectorial</span><span>✓ Recomendaciones de valor</span><span>✓ Nota del analista</span>
         </div>
-        <button className="pw-btn pw-btn-p" style={{fontSize:16,padding:"13px 32px",background:"#fff",color:"var(--navy)",fontWeight:700}} onClick={()=>setPlan("professional")}>
+        <button className="pw-btn pw-btn-p" style={{fontSize:16,padding:"13px 32px",background:"#fff",color:"var(--navy)",fontWeight:700}} onClick={()=>{setPlan("professional");planRef.current="professional";}}>
           Upgrade por solo 150€ + IVA →
         </button>
         <p style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginTop:10}}>De momento el pago no está activado. Haz clic para previsualizar.</p>
