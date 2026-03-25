@@ -181,7 +181,7 @@ Datos: Nombre: ${data.name||"No proporcionado"}, Web: ${data.website||"No propor
 Genera JSON con: {"descripcion":"2-4 frases","historia":"2-4 frases","modelo":"2-4 frases","oferta":"2-4 frases","geografia":"2-4 frases","metricas":"2-4 frases"} Todo en español. Si no conoces la empresa, genera análisis plausible basado en sector y tamaño.`;
     const apiKey=process.env.NEXT_PUBLIC_ANTHROPIC_KEY;
     if(!apiKey){setError("Análisis no disponible en este momento.");setLoading(false);return}
-    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})})
+    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:1000,messages:[{role:"user",content:prompt}]})})
     .then(r=>r.json()).then(d=>{
       const txt=d.content?.map(i=>i.text||"").join("")||"";
       try{const parsed=JSON.parse(txt.replace(/```json|```/g,"").trim());setAnalysis(parsed);if(onAnalysisReady)onAnalysisReady(parsed)}catch(e){setError("No se pudo generar el análisis.")}
@@ -246,12 +246,20 @@ Genera JSON con:
 Todo en español. Sé específico y accionable.`;
     const apiKey=process.env.NEXT_PUBLIC_ANTHROPIC_KEY;
     if(!apiKey){setError("Análisis no disponible.");setLoading(false);return}
-    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1200,messages:[{role:"user",content:prompt}]})})
+    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:1200,messages:[{role:"user",content:prompt}]})})
     .then(res=>res.json()).then(d=>{
+      if(d.type==="error"){setError("Error API: "+d.error?.message);setLoading(false);return}
       const txt=d.content?.map(i=>i.text||"").join("")||"";
-      try{const parsed=JSON.parse(txt.replace(/```json|```/g,"").trim());setAnalysis(parsed);if(onReady)onReady(parsed)}catch(e){setError("No se pudo generar el análisis profesional.")}
+      try{
+        const clean=txt.replace(/```json|```/g,"").trim();
+        const parsed=JSON.parse(clean);
+        setAnalysis(parsed);if(onReady)onReady(parsed);
+      }catch(e){
+        console.error("Parse error:",e.message,"Raw:",txt.slice(0,300));
+        setError("Error procesando respuesta: "+e.message);
+      }
       setLoading(false);
-    }).catch(()=>{setError("Error de conexión.");setLoading(false)});
+    }).catch((e)=>{setError("Error de conexión: "+e.message);setLoading(false)});
   },[]);
   if(loading)return<div className="r-sec" style={{textAlign:"center",padding:"32px 0"}}><div style={{fontSize:36,marginBottom:12}}>📊</div><p style={{fontSize:15,fontWeight:500,color:"var(--ink2)",margin:0}}>Generando análisis profesional...</p><p style={{fontSize:13,color:"var(--ink3)",margin:"6px 0 0"}}>Analizando benchmarking sectorial y generando recomendaciones personalizadas.</p></div>;
   if(error||!analysis)return<div className="r-sec"><p style={{color:"var(--ink3)",fontSize:14}}>{error||"Análisis no disponible."}</p></div>;
