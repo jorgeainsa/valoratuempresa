@@ -236,17 +236,16 @@ Genera JSON con:
     "conclusion": "2-3 frases sobre el posicionamiento relativo"
   },
   "recomendaciones": [
-    {"titulo": "Título corto", "descripcion": "2-3 frases con acción concreta y su impacto en valor", "impacto": "alto|medio|bajo", "plazo": "corto|medio|largo"},
-    {"titulo": "...", "descripcion": "...", "impacto": "...", "plazo": "..."},
+    {"titulo": "string corto", "descripcion": "1-2 frases accionables", "impacto": "alto|medio|bajo", "plazo": "corto|medio|largo"},
     {"titulo": "...", "descripcion": "...", "impacto": "...", "plazo": "..."},
     {"titulo": "...", "descripcion": "...", "impacto": "...", "plazo": "..."}
   ],
-  "nota_analista": "Párrafo de 4-6 frases con valoración cualitativa global del negocio, su posicionamiento y perspectivas. Tono profesional y específico al sector y datos reales."
+  "nota_analista": "3-4 frases valoración global. Tono profesional."
 }
 Todo en español. Sé específico y accionable.`;
     const apiKey=process.env.NEXT_PUBLIC_ANTHROPIC_KEY;
     if(!apiKey){setError("Análisis no disponible.");setLoading(false);return}
-    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:1200,messages:[{role:"user",content:prompt}]})})
+    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:2000,messages:[{role:"user",content:prompt}]})})
     .then(res=>res.json()).then(d=>{
       if(d.type==="error"){setError("Error API: "+d.error?.message);setLoading(false);return}
       const txt=d.content?.map(i=>i.text||"").join("")||"";
