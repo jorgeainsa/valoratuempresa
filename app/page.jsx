@@ -210,10 +210,145 @@ function getQualExplanation(qId,idx){
   return e[qId]?.[idx]||"";
 }
 
+function ProfessionalAnalysis({data,r,qualDetails,onReady}){
+  const[analysis,setAnalysis]=useState(null);
+  const[loading,setLoading]=useState(true);
+  const[error,setError]=useState(null);
+  const fetched=useRef(false);
+  useEffect(()=>{
+    if(fetched.current)return;fetched.current=true;
+    const sector=SECTORS.find(s=>s.id===data.sector);
+    const weakFactors=qualDetails.filter(d=>d.score<50).map(d=>d.label).join(", ")||"ninguno identificado";
+    const strongFactors=qualDetails.filter(d=>d.score>=70).map(d=>d.label).join(", ")||"ninguno destacado";
+    const prompt=`Eres un analista senior de M&A especializado en PYMEs españolas. Genera un análisis profesional para un informe de valoración. Responde SOLO con JSON válido, sin backticks.
+Empresa: ${data.name||"No proporcionada"}, Sector: ${sector?.label||"No especificado"}, Facturación: ${(r.rev/1e6).toFixed(1)}M€, EBITDA: ${(r.ebitda/1e6).toFixed(2)}M€, Quality Score: ${r.qualScore}/100.
+Puntos débiles: ${weakFactors}. Puntos fuertes: ${strongFactors}.
+Genera JSON con:
+{
+  "benchmarking": {
+    "intro": "2-3 frases contextualizando la empresa en su sector",
+    "margen_ebitda_empresa": número_porcentaje_sin_signo,
+    "margen_ebitda_sector": número_porcentaje_sin_signo,
+    "crecimiento_empresa": número_porcentaje_sin_signo,
+    "crecimiento_sector": número_porcentaje_sin_signo,
+    "multiplo_empresa": número,
+    "multiplo_sector": número,
+    "conclusion": "2-3 frases sobre el posicionamiento relativo"
+  },
+  "recomendaciones": [
+    {"titulo": "Título corto", "descripcion": "2-3 frases con acción concreta y su impacto en valor", "impacto": "alto|medio|bajo", "plazo": "corto|medio|largo"},
+    {"titulo": "...", "descripcion": "...", "impacto": "...", "plazo": "..."},
+    {"titulo": "...", "descripcion": "...", "impacto": "...", "plazo": "..."},
+    {"titulo": "...", "descripcion": "...", "impacto": "...", "plazo": "..."}
+  ],
+  "nota_analista": "Párrafo de 4-6 frases con valoración cualitativa global del negocio, su posicionamiento y perspectivas. Tono profesional y específico al sector y datos reales."
+}
+Todo en español. Sé específico y accionable.`;
+    const apiKey=process.env.NEXT_PUBLIC_ANTHROPIC_KEY;
+    if(!apiKey){setError("Análisis no disponible.");setLoading(false);return}
+    fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1200,messages:[{role:"user",content:prompt}]})})
+    .then(res=>res.json()).then(d=>{
+      const txt=d.content?.map(i=>i.text||"").join("")||"";
+      try{const parsed=JSON.parse(txt.replace(/```json|```/g,"").trim());setAnalysis(parsed);if(onReady)onReady(parsed)}catch(e){setError("No se pudo generar el análisis profesional.")}
+      setLoading(false);
+    }).catch(()=>{setError("Error de conexión.");setLoading(false)});
+  },[]);
+  if(loading)return<div className="r-sec" style={{textAlign:"center",padding:"32px 0"}}><div style={{fontSize:36,marginBottom:12}}>📊</div><p style={{fontSize:15,fontWeight:500,color:"var(--ink2)",margin:0}}>Generando análisis profesional...</p><p style={{fontSize:13,color:"var(--ink3)",margin:"6px 0 0"}}>Analizando benchmarking sectorial y generando recomendaciones personalizadas.</p></div>;
+  if(error||!analysis)return<div className="r-sec"><p style={{color:"var(--ink3)",fontSize:14}}>{error||"Análisis no disponible."}</p></div>;
+  const impactoColor={alto:"var(--green)",medio:"var(--blue)",bajo:"var(--amber)"};
+  const plazoLabel={corto:"Corto plazo (0-6m)",medio:"Medio plazo (6-18m)",largo:"Largo plazo (18m+)"};
+  const b=analysis.benchmarking;
+  const benchRows=b?[
+    {label:"Margen EBITDA",empresa:b.margen_ebitda_empresa?.toFixed(1)+"%",sector:b.margen_ebitda_sector?.toFixed(1)+"%",mejor:b.margen_ebitda_empresa>=b.margen_ebitda_sector},
+    {label:"Crecimiento",empresa:b.crecimiento_empresa?.toFixed(1)+"%",sector:b.crecimiento_sector?.toFixed(1)+"%",mejor:b.crecimiento_empresa>=b.crecimiento_sector},
+    {label:"Múltiplo EV/EBITDA",empresa:b.multiplo_empresa?.toFixed(1)+"x",sector:b.multiplo_sector?.toFixed(1)+"x",mejor:b.multiplo_empresa>=b.multiplo_sector},
+  ]:[];
+  return<>
+    {/* Benchmarking */}
+    <div className="r-sec">
+      <h3>Benchmarking sectorial</h3>
+      {b&&<><p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>{b.intro}</p>
+      <table className="m-tbl"><thead><tr><th>Indicador</th><th>Tu empresa</th><th>Mediana sector</th><th>Posición</th></tr></thead>
+      <tbody>{benchRows.map((row,i)=><tr key={i}><td><strong>{row.label}</strong></td><td style={{fontWeight:600,color:row.mejor?"var(--green)":"var(--amber)"}}>{row.empresa}</td><td>{row.sector}</td><td>{row.mejor?<span style={{color:"var(--green)",fontWeight:600}}>▲ Por encima</span>:<span style={{color:"var(--amber)",fontWeight:600}}>▼ Por debajo</span>}</td></tr>)}</tbody>
+      </table>
+      <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginTop:16}}>{b.conclusion}</p></>}
+    </div>
+    {/* Sensibilidad */}
+    <SensibilityAnalysis r={r}/>
+    {/* Recomendaciones */}
+    {analysis.recomendaciones&&<div className="r-sec">
+      <h3>Recomendaciones de creación de valor</h3>
+      <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:20}}>Basadas en los puntos de mejora identificados en el análisis cualitativo, estas son las palancas con mayor potencial para aumentar el valor de tu empresa.</p>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        {analysis.recomendaciones.map((rec,i)=><div key={i} style={{border:"1.5px solid var(--brd)",borderRadius:"var(--rs)",padding:"16px 20px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,flexWrap:"wrap"}}>
+            <span style={{background:"var(--navy)",color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700}}>{i+1}</span>
+            <strong style={{fontSize:15,color:"var(--ink)"}}>{rec.titulo}</strong>
+            <span style={{marginLeft:"auto",display:"flex",gap:6,flexWrap:"wrap"}}>
+              <span style={{background:impactoColor[rec.impacto]||"var(--blue)",color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>Impacto {rec.impacto}</span>
+              <span style={{background:"var(--bg)",border:"1.5px solid var(--brd)",borderRadius:20,padding:"2px 10px",fontSize:11,color:"var(--ink2)"}}>{plazoLabel[rec.plazo]||rec.plazo}</span>
+            </span>
+          </div>
+          <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,margin:0}}>{rec.descripcion}</p>
+        </div>)}
+      </div>
+    </div>}
+    {/* Nota analista */}
+    {analysis.nota_analista&&<div className="r-sec" style={{background:"var(--bg)",border:"1.5px solid var(--brd)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+        <div style={{width:40,height:40,borderRadius:"50%",background:"var(--navy)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div><p style={{fontWeight:700,color:"var(--ink)",margin:0,fontSize:14}}>Nota del analista</p><p style={{fontSize:12,color:"var(--ink3)",margin:0}}>SP Financial Advisory LLC · {new Date().toLocaleDateString("es-ES",{month:"long",year:"numeric"})}</p></div>
+      </div>
+      <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.65,margin:0,fontStyle:"italic"}}>"{analysis.nota_analista}"</p>
+    </div>}
+  </>;
+}
+
+function SensibilityAnalysis({r}){
+  const ebitdaVars=[-0.20,-0.10,0,0.10,0.20];
+  const multVars=[-2,-1,0,1,2];
+  const baseEbitda=r.ebitda,baseMult=r.selectedMult,baseDfn=r.dfn;
+  const calcEq=(ebitdaDelta,multDelta)=>{
+    const ev=(baseEbitda*(1+ebitdaDelta))*(baseMult+multDelta);
+    return Math.max(0,ev-baseDfn);
+  };
+  return<div className="r-sec">
+    <h3>Análisis de sensibilidad</h3>
+    <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>¿Cómo cambia el valor de las participaciones si varía el EBITDA o el múltiplo aplicado? Esta tabla muestra el rango de valores posibles en diferentes escenarios.</p>
+    <div style={{overflowX:"auto"}}>
+      <table className="m-tbl" style={{minWidth:500}}>
+        <thead>
+          <tr>
+            <th style={{background:"var(--navy)",color:"#fff"}}>EBITDA \ Múltiplo</th>
+            {multVars.map(m=><th key={m} style={{background:"var(--navy)",color:"#fff",textAlign:"center"}}>{m===0?`${baseMult.toFixed(1)}x (base)`:`${(baseMult+m).toFixed(1)}x`}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {ebitdaVars.map((e,ei)=>{
+            const rowEbitda=baseEbitda*(1+e);
+            return<tr key={ei}>{[<td key="lbl" style={{fontWeight:600,whiteSpace:"nowrap"}}>{e===0?`${(rowEbitda/1e6).toFixed(2)}M€ (base)`:e>0?`+${(e*100).toFixed(0)}% (${(rowEbitda/1e6).toFixed(2)}M€)`:`${(e*100).toFixed(0)}% (${(rowEbitda/1e6).toFixed(2)}M€)`}</td>,...multVars.map(m=>{
+              const val=calcEq(e,m);
+              const isBase=e===0&&m===0;
+              const pct=r.eqBlended>0?(val/r.eqBlended-1):0;
+              const bg=isBase?"var(--navy)":pct>0.15?"#d1fae5":pct>0?"#e8eefb":pct>-0.15?"#fff7ed":"#fee2e2";
+              const color=isBase?"#fff":pct>0.15?"var(--green)":pct>0?"var(--blue)":pct>-0.15?"var(--amber)":"var(--red)";
+              return<td key={m} style={{textAlign:"center",background:bg,color,fontWeight:isBase?700:500,fontSize:13}}>{(val/1e6).toFixed(1)}M€</td>;
+            })]}</tr>;
+          })}
+        </tbody>
+      </table>
+    </div>
+    <p style={{fontSize:12,color:"var(--ink3)",marginTop:10}}>Valores en millones de euros. La celda azul oscuro representa el escenario base.</p>
+  </div>;
+}
+
 function StepResults({data,onBack,onHome}){
   const[plan,setPlan]=useState("free");
   const[pdfLoading,setPdfLoading]=useState(false);
   const[companyAnalysis,setCompanyAnalysis]=useState(null);
+  const[professionalAnalysis,setProfessionalAnalysis]=useState(null);
   const pdfRef=useRef(null);
   const r=runValuation(data);if(!r)return<p>Error en los datos. Vuelve atr\u00e1s para corregir.</p>;
   const scoreColor=r.qualScore>70?"var(--green)":r.qualScore>40?"var(--blue)":"var(--amber)";
@@ -378,7 +513,7 @@ function StepResults({data,onBack,onHome}){
         <p>Obtén el desglose detallado por metodología, Quality Score por cada factor, hipótesis del DCF y descarga tu informe en PDF.</p>
         <div className="paywall-btns">
           <button className="pw-btn pw-btn-p" onClick={()=>setPlan("essential")}>Informe Esencial · 149€ + IVA</button>
-          <button className="pw-btn pw-btn-o" onClick={()=>alert("Próximamente disponible. El Informe Profesional incluirá análisis de sensibilidad, benchmarking sectorial y revisión por un analista.")}>Informe Profesional · 299€ + IVA</button>
+          <button className="pw-btn pw-btn-o" onClick={()=>setPlan("professional")}>Informe Profesional · 299€ + IVA</button>
         </div>
         <p style={{fontSize:12,color:"var(--ink3)",marginTop:14}}>De momento, el pago no está activado. Haz clic para previsualizar el informe.</p>
       </div>
@@ -486,14 +621,61 @@ function StepResults({data,onBack,onHome}){
       </div>
 
       {/* Upgrade to Professional */}
-      <div style={{background:"var(--bg)",border:"1.5px solid var(--brd)",borderRadius:"var(--r)",padding:"28px 32px",textAlign:"center",margin:"8px 0 28px"}}>
-        <p style={{fontSize:13,color:"var(--ink3)",textTransform:"uppercase",letterSpacing:1.5,fontWeight:600,marginBottom:8}}>¿Quieres ir más allá?</p>
-        <h3 style={{fontFamily:"'Instrument Serif',serif",fontSize:22,marginBottom:8,color:"var(--ink)"}}>Upgrade al Informe Profesional</h3>
-        <p style={{fontSize:15,color:"var(--ink2)",lineHeight:1.6,marginBottom:20,maxWidth:500,margin:"0 auto 20px"}}>Incluye análisis de sensibilidad, benchmarking sectorial, recomendaciones de creación de valor y revisión por un analista experto.</p>
-        <button className="pw-btn pw-btn-p" style={{fontSize:16,padding:"13px 32px"}} onClick={()=>alert("Próximamente disponible. Te notificaremos a " + (data.contactEmail||"tu email") + " cuando esté listo.")}>
-          Upgrade por solo 150€ + IVA
+      <div style={{background:"linear-gradient(135deg,#0f1a2e 0%,#1a3a6e 100%)",borderRadius:"var(--r)",padding:"32px",textAlign:"center",margin:"8px 0 28px",color:"#fff"}}>
+        <p style={{fontSize:12,color:"rgba(255,255,255,0.5)",textTransform:"uppercase",letterSpacing:2,fontWeight:700,marginBottom:10}}>¿Quieres ir más allá?</p>
+        <h3 style={{fontFamily:"'Instrument Serif',serif",fontSize:24,marginBottom:10,color:"#fff"}}>Upgrade al Informe Profesional</h3>
+        <div style={{display:"flex",justifyContent:"center",gap:20,flexWrap:"wrap",marginBottom:20,fontSize:14,color:"rgba(255,255,255,0.75)"}}>
+          <span>✓ Análisis de sensibilidad</span><span>✓ Benchmarking sectorial</span><span>✓ Recomendaciones de valor</span><span>✓ Nota del analista</span>
+        </div>
+        <button className="pw-btn pw-btn-p" style={{fontSize:16,padding:"13px 32px",background:"#fff",color:"var(--navy)",fontWeight:700}} onClick={()=>setPlan("professional")}>
+          Upgrade por solo 150€ + IVA →
         </button>
-        <p style={{fontSize:12,color:"var(--ink3)",marginTop:10}}>Diferencia de precio respecto al plan Esencial. Entrega en 24-48h.</p>
+        <p style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginTop:10}}>De momento el pago no está activado. Haz clic para previsualizar.</p>
+      </div>
+    </>}
+
+    {/* PROFESSIONAL PLAN */}
+    {plan==="professional"&&<>
+      <div style={{background:"linear-gradient(135deg,#0f1a2e,#1a3a6e)",borderRadius:"var(--rs)",padding:"16px 20px",marginBottom:24,display:"flex",alignItems:"center",gap:12}}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <div><p style={{fontSize:15,fontWeight:700,color:"#fff",margin:0}}>Informe Profesional desbloqueado</p><p style={{fontSize:13,color:"rgba(255,255,255,0.6)",margin:0}}>Incluye todo el Informe Esencial más análisis avanzado</p></div>
+      </div>
+
+      {/* Reutilizamos el contenido del Essential */}
+      <CompanyAnalysis data={data} onAnalysisReady={setCompanyAnalysis}/>
+      <div className="r-sec">
+        <h3>Desglose por metodología</h3>
+        <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>Para determinar el valor de <strong>{data.name||"tu empresa"}</strong>, hemos aplicado dos metodologías complementarias: <strong>múltiplos de mercado</strong> (60%), <strong>descuento de flujos de caja DCF</strong> (20%) y un <strong>ajuste cualitativo</strong> (20%).</p>
+        <table className="m-tbl"><thead><tr><th>Método</th><th>Valor Compañía</th><th>Valor Participaciones</th><th>Peso</th></tr></thead><tbody><tr><td>Múltiplos comparables</td><td>{fmtM(r.evMultiples)}</td><td>{fmtM(r.eqMultiples)}</td><td>60%</td></tr><tr><td>DCF simplificado</td><td>{fmtM(r.evDcf)}</td><td>{fmtM(r.eqDcf)}</td><td>20%</td></tr><tr><td>Ajuste cualitativo</td><td colSpan="2" style={{textAlign:"center"}}>Score {r.qualScore}/100</td><td>20%</td></tr><tr><td>Valoración ponderada</td><td>{fmtM(r.evBlended)}</td><td>{fmtM(r.eqBlended)}</td><td>100%</td></tr></tbody></table>
+      </div>
+      <div className="r-sec">
+        <h3>Quality Score · Análisis detallado</h3>
+        <div>{qualDetails.map((d,i)=><div key={i} style={{marginBottom:16,paddingBottom:i<qualDetails.length-1?16:0,borderBottom:i<qualDetails.length-1?"1px solid var(--brd)":"none"}}><div className="sc-row"><span className="sc-lbl">{d.label}</span><div className="sc-bg"><div className="sc-fill" style={{width:d.score+"%",background:d.color}}/></div><span className="sc-val">{d.score}</span></div>{d.optionIndex!==undefined&&d.score>0&&<p style={{fontSize:13,color:"var(--ink3)",lineHeight:1.55,margin:"6px 0 0",paddingLeft:142}}>{getQualExplanation(d.id,d.optionIndex)}</p>}</div>)}</div>
+      </div>
+
+      {/* Professional-only content */}
+      <ProfessionalAnalysis data={data} r={r} qualDetails={qualDetails} onReady={setProfessionalAnalysis}/>
+
+      {/* DCF */}
+      <div className="r-sec">
+        <h3>Hipótesis del modelo financiero (DCF)</h3>
+        <table className="m-tbl dcf-tbl"><thead><tr><th>Parámetro</th><th>Valor</th><th>Qué significa</th></tr></thead><tbody><tr><td><strong>EBITDA calculado</strong></td><td>{fmtM(r.ebitda)}</td><td style={{fontSize:13,color:"var(--ink3)"}}>Resultado de explotación + amortización.</td></tr><tr><td><strong>Crecimiento proyectado</strong></td><td>{fmtPct(r.cappedGrowth)} → {fmtPct(TERMINAL_GROWTH)}</td><td style={{fontSize:13,color:"var(--ink3)"}}>Basado en evolución histórica, se reduce gradualmente.</td></tr><tr><td><strong>WACC</strong></td><td>{fmtPct(r.wacc)}</td><td style={{fontSize:13,color:"var(--ink3)"}}>Tasa de descuento ajustada por riesgo.</td></tr><tr><td><strong>Tasa impositiva</strong></td><td>{fmtPct(TAX_RATE)}</td><td style={{fontSize:13,color:"var(--ink3)"}}>IS España.</td></tr><tr><td><strong>Crecimiento terminal</strong></td><td>{fmtPct(TERMINAL_GROWTH)}</td><td style={{fontSize:13,color:"var(--ink3)"}}>PIB español largo plazo.</td></tr><tr><td><strong>Período de proyección</strong></td><td>{PROJECTION_YEARS} años</td><td style={{fontSize:13,color:"var(--ink3)"}}>Horizonte explícito.</td></tr></tbody></table>
+      </div>
+      <div className="r-sec">
+        <h3>Puente de valoración</h3>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,flexWrap:"wrap",padding:"16px 0"}}>
+          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--blueS)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:2}}>Valor Compañía</div><div style={{fontSize:20,fontWeight:600,color:"var(--blue)"}}>{fmtM(r.evBlended)}</div></div>
+          <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>{r.dfn>0?"−":"+"}</span>
+          <div style={{textAlign:"center",padding:"14px 22px",background:r.dfn>0?"var(--redS)":"var(--greenS)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"var(--ink3)",marginBottom:2}}>Deuda Fin. Neta</div><div style={{fontSize:20,fontWeight:600,color:r.dfn>0?"var(--red)":"var(--green)"}}>{fmtM(Math.abs(r.dfn))}</div></div>
+          <span style={{fontSize:22,color:"var(--ink3)",fontWeight:300}}>=</span>
+          <div style={{textAlign:"center",padding:"14px 22px",background:"var(--navy)",borderRadius:"var(--rs)",minWidth:160,flex:"1 1 160px",maxWidth:200}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:2}}>Valor Participaciones</div><div style={{fontSize:20,fontWeight:600,color:"#fff"}}>{fmtM(r.eqBlended)}</div></div>
+        </div>
+      </div>
+
+      <div style={{textAlign:"center",margin:"28px 0"}}>
+        <button className="btn btn-p" style={{padding:"14px 36px",fontSize:16}} disabled={pdfLoading} onClick={generatePDF}>
+          {pdfLoading?<>Generando PDF...</>:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Descargar informe PDF Profesional</>}
+        </button>
       </div>
     </>}
 
