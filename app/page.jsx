@@ -580,7 +580,7 @@ function StepResults({data,onBack,onHome}){
         pa.recomendaciones.forEach((rec,ri)=>{
           y=ck(30);
           const impColor={alto:GR,medio:BL,bajo:AM};const ic=impColor[rec.impacto]||BL;
-          doc.setFillColor("#f7f8fb");doc.roundedRect(M,y,CW,6,"F");
+          doc.setFillColor("#f7f8fb");doc.roundedRect(M,y,CW,6,1,1,"F");
           doc.setFontSize(7.5);doc.setTextColor("#ffffff");doc.setFillColor(ic);doc.roundedRect(M,y,22,6,1,1,"F");
           doc.setFont("helvetica","bold");doc.text((ri+1)+". "+rec.titulo,M+25,y+4.5);
           doc.setTextColor(ic);doc.text("Impacto "+(rec.impacto||""),M+2,y+4.5);
@@ -595,8 +595,8 @@ function StepResults({data,onBack,onHome}){
       y=ck(50);doc.addPage();y=25;
       doc.setFontSize(16);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("9. NOTA DEL ANALISTA",M,y);y+=14;
       // Box with analyst note
-      const noteLines=pa.nota_analista?doc.splitTextToSize("\u201c"+pa.nota_analista+"\u201d",CW-16):[];
-      const noteH=noteLines.length*5+20;
+      const noteLines=pa.nota_analista?doc.splitTextToSize("\u201c"+pa.nota_analista+"\u201d",CW-16):["(Sin nota del analista)"];
+      const noteH=Math.max(20,noteLines.length*5+20);
       y=ck(noteH+20);
       doc.setFillColor("#f7f8fb");doc.roundedRect(M,y,CW,noteH,3,3,"F");
       doc.setDrawColor(BL);doc.setLineWidth(0.4);doc.line(M,y,M,y+noteH);
