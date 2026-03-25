@@ -354,8 +354,9 @@ function SensibilityAnalysis({r}){
 
 // ─── GOOGLE SHEETS ───────────────────────────────────────
 async function saveToGoogleSheets(data, plan) {
-  const SHEETS_URL = process.env.NEXT_PUBLIC_SHEETS_URL;
+  let SHEETS_URL = process.env.NEXT_PUBLIC_SHEETS_URL;
   if (!SHEETS_URL) return;
+  if (!SHEETS_URL.startsWith("http")) SHEETS_URL = "https://" + SHEETS_URL;
   try {
     const r = runValuation(data);
     await fetch(SHEETS_URL, {
