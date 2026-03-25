@@ -349,6 +349,8 @@ function StepResults({data,onBack,onHome}){
   const[pdfLoading,setPdfLoading]=useState(false);
   const[companyAnalysis,setCompanyAnalysis]=useState(null);
   const[professionalAnalysis,setProfessionalAnalysis]=useState(null);
+  const professionalAnalysisRef=useRef(null);
+  const companyAnalysisRef=useRef(null);
   const pdfRef=useRef(null);
   const r=runValuation(data);if(!r)return<p>Error en los datos. Vuelve atr\u00e1s para corregir.</p>;
   const scoreColor=r.qualScore>70?"var(--green)":r.qualScore>40?"var(--blue)":"var(--amber)";
@@ -364,7 +366,7 @@ function StepResults({data,onBack,onHome}){
     s.onerror=()=>{alert("Error cargando PDF");setPdfLoading(false)};
     document.head.appendChild(s);
   };
-  function buildPDFDoc(){
+  function buildPDFDoc(){const professionalAnalysis=professionalAnalysisRef.current;const companyAnalysis=companyAnalysisRef.current;
     const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:"mm",format:"a4"});
     const W=210,H=297,M=18,CW=W-2*M;let y=0;
     const NY="#0f1a2e",BL="#1a56db",GY="#6b7a96",IK="#0b1222",I2="#374259",GR="#0d7c3d",AM="#c2790e",RD="#b91c1c";
@@ -656,7 +658,7 @@ function StepResults({data,onBack,onHome}){
 
 
       {/* AI Company Analysis */}
-      <CompanyAnalysis data={data} onAnalysisReady={setCompanyAnalysis}/>
+      <CompanyAnalysis data={data} onAnalysisReady={(ca)=>{setCompanyAnalysis(ca);companyAnalysisRef.current=ca;}}/>
 
       {/* Methodology with explanation */}
       <div className="r-sec">
@@ -757,7 +759,7 @@ function StepResults({data,onBack,onHome}){
       </div>
 
       {/* Reutilizamos el contenido del Essential */}
-      <CompanyAnalysis data={data} onAnalysisReady={setCompanyAnalysis}/>
+      <CompanyAnalysis data={data} onAnalysisReady={(ca)=>{setCompanyAnalysis(ca);companyAnalysisRef.current=ca;}}/>
       <div className="r-sec">
         <h3>Desglose por metodología</h3>
         <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>Para determinar el valor de <strong>{data.name||"tu empresa"}</strong>, hemos aplicado dos metodologías complementarias: <strong>múltiplos de mercado</strong> (60%), <strong>descuento de flujos de caja DCF</strong> (20%) y un <strong>ajuste cualitativo</strong> (20%).</p>
@@ -769,7 +771,7 @@ function StepResults({data,onBack,onHome}){
       </div>
 
       {/* Professional-only content */}
-      <ProfessionalAnalysis data={data} r={r} qualDetails={qualDetails} onReady={setProfessionalAnalysis}/>
+      <ProfessionalAnalysis data={data} r={r} qualDetails={qualDetails} onReady={(pa)=>{setProfessionalAnalysis(pa);professionalAnalysisRef.current=pa;}}/>
 
       {/* DCF */}
       <div className="r-sec">
@@ -788,7 +790,8 @@ function StepResults({data,onBack,onHome}){
       </div>
 
       <div style={{textAlign:"center",margin:"28px 0"}}>
-        <button className="btn btn-p" style={{padding:"14px 36px",fontSize:16}} disabled={pdfLoading} onClick={generatePDF}>
+        {!professionalAnalysis&&<p style={{fontSize:13,color:"var(--ink3)",marginBottom:12}}>⏳ Espera a que termine de generarse el análisis antes de descargar el PDF.</p>}
+        <button className="btn btn-p" style={{padding:"14px 36px",fontSize:16}} disabled={pdfLoading||!professionalAnalysis} onClick={generatePDF}>
           {pdfLoading?<>Generando PDF...</>:<><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Descargar informe PDF Profesional</>}
         </button>
       </div>
