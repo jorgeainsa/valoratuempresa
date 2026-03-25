@@ -275,9 +275,9 @@ Todo en español. Sé específico y accionable.`;
     <div className="r-sec">
       <h3>Benchmarking sectorial</h3>
       {b&&<><p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>{b.intro}</p>
-      <table className="m-tbl"><thead><tr><th>Indicador</th><th>Tu empresa</th><th>Mediana sector</th><th>Posición</th></tr></thead>
-      <tbody>{benchRows.map((row,i)=><tr key={i}><td><strong>{row.label}</strong></td><td style={{fontWeight:600,color:row.mejor?"var(--green)":"var(--amber)"}}>{row.empresa}</td><td>{row.sector}</td><td>{row.mejor?<span style={{color:"var(--green)",fontWeight:600}}>▲ Por encima</span>:<span style={{color:"var(--amber)",fontWeight:600}}>▼ Por debajo</span>}</td></tr>)}</tbody>
-      </table>
+      <div style={{overflowX:"auto"}}><table className="m-tbl" style={{minWidth:320}}><thead><tr><th>Indicador</th><th style={{whiteSpace:"nowrap"}}>Tu empresa</th><th style={{whiteSpace:"nowrap"}}>Sector</th><th style={{whiteSpace:"nowrap"}}>Posición</th></tr></thead>
+      <tbody>{benchRows.map((row,i)=><tr key={i}><td><strong>{row.label}</strong></td><td style={{fontWeight:600,color:row.mejor?"var(--green)":"var(--amber)",whiteSpace:"nowrap"}}>{row.empresa}</td><td style={{whiteSpace:"nowrap"}}>{row.sector}</td><td style={{whiteSpace:"nowrap"}}>{row.mejor?<span style={{color:"var(--green)",fontWeight:600}}>▲ Encima</span>:<span style={{color:"var(--amber)",fontWeight:600}}>▼ Debajo</span>}</td></tr>)}</tbody>
+      </table></div>
       <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginTop:16}}>{b.conclusion}</p></>}
     </div>
     {/* Sensibilidad */}
@@ -692,7 +692,7 @@ function StepResults({data,onBack,onHome}){
       <div style={{position:"relative"}}>
         <div style={{filter:"blur(6px)",pointerEvents:"none",userSelect:"none",opacity:0.5}}>
           <div className="r-sec"><h3>Análisis de la compañía</h3><p style={{color:"var(--ink3)",fontSize:14}}>Descripción del negocio, historia, modelo operativo, oferta de productos y servicios, presencia geográfica y métricas operativas clave...</p></div>
-          <div className="r-sec"><h3>Desglose por metodología</h3><table className="m-tbl"><thead><tr><th>Método</th><th>Valor Compañía</th><th>Valor Participaciones</th><th>Peso</th></tr></thead><tbody><tr><td>Múltiplos comparables</td><td>{fmtM(r.evMultiples)}</td><td>{fmtM(r.eqMultiples)}</td><td>60%</td></tr><tr><td>DCF simplificado</td><td>{fmtM(r.evDcf)}</td><td>{fmtM(r.eqDcf)}</td><td>20%</td></tr><tr><td>Ajuste cualitativo</td><td colSpan="2" style={{textAlign:"center"}}>Score {r.qualScore}/100</td><td>20%</td></tr><tr><td>Valoración ponderada</td><td>{fmtM(r.evBlended)}</td><td>{fmtM(r.eqBlended)}</td><td>100%</td></tr></tbody></table></div>
+          <div className="r-sec"><h3>Desglose por metodología</h3><div style={{overflowX:"auto"}}><table className="m-tbl" style={{minWidth:320}}><thead><tr><th>Método</th><th>EV</th><th>Equity</th><th>Peso</th></tr></thead><tbody><tr><td>Múltiplos</td><td>{fmtM(r.evMultiples)}</td><td>{fmtM(r.eqMultiples)}</td><td>60%</td></tr><tr><td>DCF</td><td>{fmtM(r.evDcf)}</td><td>{fmtM(r.eqDcf)}</td><td>20%</td></tr><tr><td>Ajuste cualitativo</td><td colSpan="2" style={{textAlign:"center"}}>Score {r.qualScore}/100</td><td>20%</td></tr><tr><td><strong>Ponderada</strong></td><td><strong>{fmtM(r.evBlended)}</strong></td><td><strong>{fmtM(r.eqBlended)}</strong></td><td><strong>100%</strong></td></tr></tbody></table></div></div>
         </div>
         <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",background:"var(--w)",border:"2px solid var(--blue)",borderRadius:12,padding:"16px 28px",textAlign:"center",boxShadow:"0 4px 24px rgba(0,0,0,0.12)"}}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginBottom:4}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -718,15 +718,15 @@ function StepResults({data,onBack,onHome}){
       <div className="r-sec">
         <h3>Desglose por metodología</h3>
         <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>Para determinar el valor de <strong>{data.name||"tu empresa"}</strong>, hemos aplicado dos metodologías de valoración complementarias. El método de <strong>múltiplos de mercado</strong> (60% del peso) compara tu empresa con transacciones reales de compañías similares en España. El método de <strong>descuento de flujos de caja (DCF)</strong> (20% del peso) estima el valor intrínseco en función de la capacidad futura de generar beneficios. Un <strong>ajuste cualitativo</strong> (20% del peso) posiciona tu empresa dentro del rango según las características específicas de tu negocio.</p>
-        <table className="m-tbl">
-          <thead><tr><th>Método</th><th>Valor Compañía</th><th>Valor Participaciones</th><th>Peso</th></tr></thead>
+        <div style={{overflowX:"auto"}}><table className="m-tbl" style={{minWidth:320}}>
+          <thead><tr><th>Método</th><th>EV</th><th>Equity</th><th>Peso</th></tr></thead>
           <tbody>
-            <tr><td>Múltiplos comparables</td><td>{fmtM(r.evMultiples)}</td><td>{fmtM(r.eqMultiples)}</td><td>60%</td></tr>
-            <tr><td>DCF simplificado</td><td>{fmtM(r.evDcf)}</td><td>{fmtM(r.eqDcf)}</td><td>20%</td></tr>
+            <tr><td>Múltiplos</td><td>{fmtM(r.evMultiples)}</td><td>{fmtM(r.eqMultiples)}</td><td>60%</td></tr>
+            <tr><td>DCF</td><td>{fmtM(r.evDcf)}</td><td>{fmtM(r.eqDcf)}</td><td>20%</td></tr>
             <tr><td>Ajuste cualitativo</td><td colSpan="2" style={{textAlign:"center"}}>Score {r.qualScore}/100</td><td>20%</td></tr>
-            <tr><td>Valoración ponderada</td><td>{fmtM(r.evBlended)}</td><td>{fmtM(r.eqBlended)}</td><td>100%</td></tr>
+            <tr><td><strong>Ponderada</strong></td><td><strong>{fmtM(r.evBlended)}</strong></td><td><strong>{fmtM(r.eqBlended)}</strong></td><td><strong>100%</strong></td></tr>
           </tbody>
-        </table>
+        </table></div>
       </div>
 
       {/* Quality Score detailed breakdown */}
@@ -816,7 +816,7 @@ function StepResults({data,onBack,onHome}){
       <div className="r-sec">
         <h3>Desglose por metodología</h3>
         <p style={{fontSize:14,color:"var(--ink2)",lineHeight:1.6,marginBottom:16}}>Para determinar el valor de <strong>{data.name||"tu empresa"}</strong>, hemos aplicado dos metodologías complementarias: <strong>múltiplos de mercado</strong> (60%), <strong>descuento de flujos de caja DCF</strong> (20%) y un <strong>ajuste cualitativo</strong> (20%).</p>
-        <table className="m-tbl"><thead><tr><th>Método</th><th>Valor Compañía</th><th>Valor Participaciones</th><th>Peso</th></tr></thead><tbody><tr><td>Múltiplos comparables</td><td>{fmtM(r.evMultiples)}</td><td>{fmtM(r.eqMultiples)}</td><td>60%</td></tr><tr><td>DCF simplificado</td><td>{fmtM(r.evDcf)}</td><td>{fmtM(r.eqDcf)}</td><td>20%</td></tr><tr><td>Ajuste cualitativo</td><td colSpan="2" style={{textAlign:"center"}}>Score {r.qualScore}/100</td><td>20%</td></tr><tr><td>Valoración ponderada</td><td>{fmtM(r.evBlended)}</td><td>{fmtM(r.eqBlended)}</td><td>100%</td></tr></tbody></table>
+        <div style={{overflowX:"auto"}}><table className="m-tbl" style={{minWidth:320}}><thead><tr><th>Método</th><th>EV</th><th>Equity</th><th>Peso</th></tr></thead><tbody><tr><td>Múltiplos</td><td>{fmtM(r.evMultiples)}</td><td>{fmtM(r.eqMultiples)}</td><td>60%</td></tr><tr><td>DCF</td><td>{fmtM(r.evDcf)}</td><td>{fmtM(r.eqDcf)}</td><td>20%</td></tr><tr><td>Ajuste cualitativo</td><td colSpan="2" style={{textAlign:"center"}}>Score {r.qualScore}/100</td><td>20%</td></tr><tr><td><strong>Ponderada</strong></td><td><strong>{fmtM(r.evBlended)}</strong></td><td><strong>{fmtM(r.eqBlended)}</strong></td><td><strong>100%</strong></td></tr></tbody></table></div>
       </div>
       <div className="r-sec">
         <h3>Quality Score · Análisis detallado</h3>
