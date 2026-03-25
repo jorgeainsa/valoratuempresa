@@ -239,7 +239,7 @@ function StepResults({data,onBack,onHome}){
     function bT(t){doc.setFontSize(9.5);doc.setTextColor(I2);doc.setFont("helvetica","normal");const l=doc.splitTextToSize(t,CW);y=ck(l.length*4.5);doc.text(l,M,y);y+=l.length*4.5+2}
     function box3(x,yy,bg,lbl,val,lc,vc){doc.setFillColor(bg);doc.roundedRect(x,yy,bbW,bh,2,2,"F");doc.setFontSize(7);doc.setTextColor(lc);doc.text(lbl,x+bbW/2,yy+6,{align:"center"});doc.setFontSize(12);doc.setTextColor(vc);doc.setFont("helvetica","bold");doc.text(val,x+bbW/2,yy+14,{align:"center"});doc.setFont("helvetica","normal")}
     function sign(x,yy,t){doc.setFontSize(16);doc.setTextColor(GY);doc.setFont("helvetica","normal");doc.text(t,x,yy+12,{align:"center"})}
-    function donut(cx,cy,radius,pct,color){const bg="#e4e8f1";const startAngle=-Math.PI/2;const endAngle=startAngle+2*Math.PI*(pct/100);doc.setDrawColor(bg);doc.setLineWidth(2.5);for(let a=0;a<2*Math.PI;a+=0.05){const x1=cx+radius*Math.cos(a),y1=cy+radius*Math.sin(a),x2=cx+radius*Math.cos(a+0.05),y2=cy+radius*Math.sin(a+0.05);doc.line(x1,y1,x2,y2)}doc.setDrawColor(color);doc.setLineWidth(2.5);if(pct>0){for(let a=startAngle;a<endAngle;a+=0.05){const ae=Math.min(a+0.05,endAngle);const x1=cx+radius*Math.cos(a),y1=cy+radius*Math.sin(a),x2=cx+radius*Math.cos(ae),y2=cy+radius*Math.sin(ae);doc.line(x1,y1,x2,y2)}}doc.setFontSize(9);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(pct+"%",cx,cy+3,{align:"center"});doc.setFont("helvetica","normal")}
+    function donut(cx,cy,radius,pct,color){const bg="#e4e8f1";const startAngle=-Math.PI/2;const endAngle=startAngle+2*Math.PI*(pct/100);doc.setDrawColor(bg);doc.setLineWidth(2.5);for(let a=0;a<2*Math.PI;a+=0.05){const x1=cx+radius*Math.cos(a),y1=cy+radius*Math.sin(a),x2=cx+radius*Math.cos(a+0.05),y2=cy+radius*Math.sin(a+0.05);doc.line(x1,y1,x2,y2)}doc.setDrawColor(color);doc.setLineWidth(2.5);if(pct>0){for(let a=startAngle;a<endAngle;a+=0.05){const ae=Math.min(a+0.05,endAngle);const x1=cx+radius*Math.cos(a),y1=cy+radius*Math.sin(a),x2=cx+radius*Math.cos(ae),y2=cy+radius*Math.sin(ae);doc.line(x1,y1,x2,y2)}}doc.setFontSize(10);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(pct+"%",cx,cy+1,{align:"center"});doc.setFont("helvetica","normal")}
 
     // ═══ COVER ═══
     doc.setFillColor(NY);doc.rect(0,0,W,H,"F");
@@ -275,7 +275,7 @@ function StepResults({data,onBack,onHome}){
 
     // ═══ SECTION 1: VALORACIÓN ═══
     doc.addPage();y=25;
-    doc.setFontSize(9);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("1. VALORACI\u00d3N",M,y);y+=8;
+    doc.setFontSize(16);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("1. VALORACI\u00d3N",M,y);y+=12;
     doc.setFillColor(NY);doc.roundedRect(M,y,CW,45,3,3,"F");
     doc.setFontSize(9);doc.setTextColor("#8899bb");doc.text("VALOR DE LAS PARTICIPACIONES (EQUITY VALUE)",W/2,y+12,{align:"center"});
     doc.setFontSize(26);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");doc.text(fmtM(r.eqBlended),W/2,y+28,{align:"center"});
@@ -287,7 +287,7 @@ function StepResults({data,onBack,onHome}){
 
     // ═══ SECTION 2: ANÁLISIS COMPAÑÍA ═══
     doc.addPage();y=25;
-    doc.setFontSize(9);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("2. AN\u00c1LISIS DE LA COMPA\u00d1\u00cdA",M,y);y+=8;
+    doc.setFontSize(16);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("2. AN\u00c1LISIS DE LA COMPA\u00d1\u00cdA",M,y);y+=12;
     if(companyAnalysis){
       [{t:"Descripci\u00f3n del negocio",v:companyAnalysis.descripcion},{t:"Historia y trayectoria",v:companyAnalysis.historia},{t:"Modelo de negocio",v:companyAnalysis.modelo},{t:"Oferta de productos/servicios",v:companyAnalysis.oferta},{t:"Presencia geogr\u00e1fica",v:companyAnalysis.geografia},{t:"M\u00e9tricas operativas clave",v:companyAnalysis.metricas}].forEach(f=>{
         if(!f.v)return;y=ck(16);doc.setFontSize(10);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text(f.t,M,y);y+=5.5;
@@ -297,7 +297,7 @@ function StepResults({data,onBack,onHome}){
 
     // ═══ SECTION 3: METODOLOGÍA & PUENTE ═══
     doc.addPage();y=25;
-    doc.setFontSize(9);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("3. DESGLOSE POR METODOLOG\u00cdA & PUENTE DE VALORACI\u00d3N",M,y);y+=10;
+    doc.setFontSize(16);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("3. DESGLOSE POR METODOLOG\u00cdA & PUENTE DE VALORACI\u00d3N",M,y);y+=12;
     sT("Desglose por metodolog\u00eda");
     bT("Para determinar el valor de "+(data.name||"la empresa")+", se han aplicado dos metodolog\u00edas: m\u00faltiplos de mercado (60%) y descuento de flujos de caja (20%), con un ajuste cualitativo (20%).");
     y=ck(35);let tx=M;doc.setFillColor(NY);doc.rect(M,y,CW,7,"F");doc.setFontSize(7.5);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");
@@ -308,7 +308,7 @@ function StepResults({data,onBack,onHome}){
 
     // ═══ SECTION 4: QUALITY SCORE WITH DONUTS ═══
     doc.addPage();y=25;
-    doc.setFontSize(9);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("4. QUALITY SCORE",M,y);y+=10;
+    doc.setFontSize(16);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("4. QUALITY SCORE",M,y);y+=12;
     doc.setFontSize(11);doc.setTextColor(IK);doc.setFont("helvetica","bold");doc.text("Puntuaci\u00f3n global: "+r.qualScore+"/100",M,y);
     doc.setFont("helvetica","normal");doc.setFontSize(9.5);doc.setTextColor(I2);doc.text("  (percentil "+Math.round(r.percentile*100)+")",M+55,y);y+=10;
 
@@ -337,7 +337,7 @@ function StepResults({data,onBack,onHome}){
 
     // ═══ SECTION 5: DCF & COMPOSITION ═══
     doc.addPage();y=25;
-    doc.setFontSize(9);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("5. HIP\u00d3TESIS DEL MODELO FINANCIERO & COMPOSICI\u00d3N DCF",M,y);y+=10;
+    doc.setFontSize(16);doc.setTextColor(BL);doc.setFont("helvetica","bold");const s5lines=doc.splitTextToSize("5. HIP\u00d3TESIS DEL MODELO FINANCIERO & COMPOSICI\u00d3N DCF",CW);doc.text(s5lines,M,y);y+=s5lines.length*7+5;
     sT("Hip\u00f3tesis del modelo financiero (DCF)");
     bT("Estima el valor en funci\u00f3n del dinero que generar\u00e1 la empresa en el futuro, descontado a valor presente.");
     y=ck(50);tx=M;doc.setFillColor(NY);doc.rect(M,y,CW,7,"F");doc.setFontSize(7.5);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");
