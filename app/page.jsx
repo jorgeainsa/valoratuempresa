@@ -351,6 +351,41 @@ function SensibilityAnalysis({r}){
   </div>;
 }
 
+
+// ─── GOOGLE SHEETS ───────────────────────────────────────
+async function saveToGoogleSheets(data, plan) {
+  const SHEETS_URL = process.env.NEXT_PUBLIC_SHEETS_URL;
+  if (!SHEETS_URL) return;
+  try {
+    const r = runValuation(data);
+    await fetch(SHEETS_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fecha: new Date().toISOString(),
+        nombre: data.contactName || "",
+        email: data.contactEmail || "",
+        telefono: data.contactPhone || "",
+        empresa: data.name || "",
+        sector: data.sector || "",
+        provincia: data.province || "",
+        empleados: data.employees || "",
+        fundacion: data.founded || "",
+        web: data.website || "",
+        facturacion: data.revenue || "",
+        ebitda: r ? Math.round(r.ebitda) : "",
+        dfn: r ? Math.round(r.dfn) : "",
+        quality_score: r ? r.qualScore : "",
+        equity_value: r ? Math.round(r.eqBlended) : "",
+        plan: plan || "free",
+      }),
+    });
+  } catch (e) {
+    console.warn("Sheets save failed:", e.message);
+  }
+}
+
 function StepResults({data,onBack,onHome}){
   const[plan,setPlan]=useState("free");const planRef=useRef("free");
   const[pdfLoading,setPdfLoading]=useState(false);
@@ -394,7 +429,7 @@ function StepResults({data,onBack,onHome}){
     doc.setDrawColor(BL);doc.setLineWidth(0.8);doc.line(M,55,W-M,55);
     doc.setFontSize(28);doc.text("Informe de Valoraci\u00f3n",M,75);
     doc.setFontSize(22);doc.text(isPro?"Profesional":"Esencial",M,87);
-    if(isPro){doc.setFontSize(11);doc.setTextColor("#fbbf24");doc.setFont("helvetica","normal");doc.text("\u2605  Incluye benchmarking, sensibilidad, recomendaciones y nota del analista",M,98)}
+
     doc.setFontSize(26);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");doc.text(data.name||"Empresa",M,115);
     doc.setFontSize(14);doc.setFont("helvetica","normal");doc.setTextColor("#8899bb");
     doc.text(r.sector.label,M,128);
@@ -528,7 +563,7 @@ function StepResults({data,onBack,onHome}){
           doc.setFont("helvetica","normal");const isAbove=row[3]==="Por encima";
           doc.setTextColor(isAbove?GR:AM);doc.text(row[1],bx+2,y+5);bx+=bCols[1];
           doc.setTextColor(I2);doc.text(row[2],bx+2,y+5);bx+=bCols[2];
-          doc.setTextColor(isAbove?GR:AM);doc.setFont("helvetica","bold");doc.text(isAbove?"\u25b2 "+row[3]:"\u25bc "+row[3],bx+2,y+5);
+          doc.setTextColor(isAbove?GR:AM);doc.setFont("helvetica","bold");doc.text(row[3],bx+2,y+5);
           doc.setFont("helvetica","normal");y+=7;
         });
         y+=8;if(b.conclusion){doc.setTextColor(I2);bT(b.conclusion)}
@@ -578,39 +613,49 @@ function StepResults({data,onBack,onHome}){
       y+=6;
       if(pa.recomendaciones){
         pa.recomendaciones.forEach((rec,ri)=>{
-          y=ck(30);
           const impColor={alto:GR,medio:BL,bajo:AM};const ic=impColor[rec.impacto]||BL;
-          doc.setFillColor("#f7f8fb");doc.roundedRect(M,y,CW,6,1,1,"F");
-          doc.setFontSize(7.5);doc.setTextColor("#ffffff");doc.setFillColor(ic);doc.roundedRect(M,y,22,6,1,1,"F");
-          doc.setFont("helvetica","bold");doc.text((ri+1)+". "+rec.titulo,M+25,y+4.5);
-          doc.setTextColor(ic);doc.text("Impacto "+(rec.impacto||""),M+2,y+4.5);
-          y+=8;
+          const descLines=doc.splitTextToSize(rec.descripcion||"",CW-4);
+          const blockH=10+descLines.length*4.5+8;
+          y=ck(blockH);
+          // Badge de impacto
+          doc.setFillColor(ic);doc.roundedRect(M,y,28,6,1,1,"F");
+          doc.setFontSize(7);doc.setTextColor("#ffffff");doc.setFont("helvetica","bold");
+          doc.text("Impacto "+(rec.impacto||"").toUpperCase(),M+2,y+4.2);
+          // Número y título
+          doc.setFontSize(10);doc.setTextColor(IK);doc.setFont("helvetica","bold");
+          doc.text((ri+1)+". "+(rec.titulo||""),M+31,y+4.5);
+          y+=10;
+          // Descripción
           doc.setFont("helvetica","normal");doc.setTextColor(I2);doc.setFontSize(9);
-          const lines=doc.splitTextToSize(rec.descripcion||"",CW);y=ck(lines.length*4.2);
-          doc.text(lines,M,y);y+=lines.length*4.2+8;
+          doc.text(descLines,M+2,y);
+          y+=descLines.length*4.5+10;
+          // Separador
+          doc.setDrawColor("#e4e8f1");doc.setLineWidth(0.3);doc.line(M,y-4,W-M,y-4);
         });
       }
 
       // ── SECTION 9: NOTA DEL ANALISTA ──
-      y=ck(50);doc.addPage();y=25;
+      doc.addPage();y=25;
       doc.setFontSize(16);doc.setTextColor(BL);doc.setFont("helvetica","bold");doc.text("9. NOTA DEL ANALISTA",M,y);y+=14;
-      // Box with analyst note
-      const noteLines=pa.nota_analista?doc.splitTextToSize("\u201c"+pa.nota_analista+"\u201d",CW-16):["(Sin nota del analista)"];
-      const noteH=Math.max(20,noteLines.length*5+20);
-      y=ck(noteH+20);
+      // Nota - calcular líneas con fuente más pequeña para que quepa
+      doc.setFontSize(9);
+      const noteLines=pa.nota_analista?doc.splitTextToSize("\u201c"+pa.nota_analista+"\u201d",CW-20):["(Sin nota del analista)"];
+      const noteH=Math.max(30,noteLines.length*5.5+20);
       doc.setFillColor("#f7f8fb");doc.roundedRect(M,y,CW,noteH,3,3,"F");
       doc.setDrawColor(BL);doc.setLineWidth(0.4);doc.line(M,y,M,y+noteH);
-      doc.setFontSize(9.5);doc.setTextColor(I2);doc.setFont("helvetica","italic");
+      doc.setTextColor(I2);doc.setFont("helvetica","italic");
       doc.text(noteLines,M+10,y+10);
-      y+=noteH+12;
-      // Analyst signature
-      doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(IK);doc.text("SP Financial Advisory LLC",M,y);y+=5;
-      doc.setFont("helvetica","normal");doc.setTextColor(GY);doc.text("Analista de valoraci\u00f3n · "+new Date().toLocaleDateString("es-ES",{month:"long",year:"numeric"}),M,y);y+=5;
-      doc.setFontSize(8);doc.text("Este an\u00e1lisis tiene car\u00e1cter indicativo. Para uso exclusivo del destinatario.",M,y);
+      y+=noteH+16;
+      // Firma al final de la última página
+      const lastPage=doc.getNumberOfPages();
+      doc.setPage(lastPage);
+      const sigY=H-38;
+      doc.setDrawColor("#e4e8f1");doc.setLineWidth(0.3);doc.line(M,sigY,W-M,sigY);
+      doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(IK);doc.text("SP Financial Advisory LLC",M,sigY+7);
+      doc.setFont("helvetica","normal");doc.setTextColor(GY);doc.setFontSize(8);
+      doc.text("Analista de valoraci\u00f3n · "+new Date().toLocaleDateString("es-ES",{month:"long",year:"numeric"}),M,sigY+13);
+      doc.text("An\u00e1lisis indicativo. Para uso exclusivo del destinatario.",M,sigY+19);
     }
-
-    // Disclaimer
-    y=ck(15);doc.setFillColor("#fef6e7");doc.roundedRect(M,y,CW,12,2,2,"F");doc.setFontSize(7.5);doc.setTextColor(AM);doc.setFont("helvetica","bold");doc.text("Aviso legal:",M+4,y+5);doc.setFont("helvetica","normal");doc.text("Esta valoraci\u00f3n tiene car\u00e1cter indicativo y orientativo.",M+24,y+5);doc.text("Para una valoraci\u00f3n vinculante, contratar un asesor profesional.",M+4,y+9);
 
     // Footers on all pages
     const tp=doc.getNumberOfPages();for(let i=1;i<=tp;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(GY);doc.text("valoratuempresa.es \u00b7 SP Financial Advisory LLC",W/2,H-10,{align:"center"});doc.text("P\u00e1g. "+i+"/"+tp,W-M,H-10,{align:"right"})}
@@ -637,8 +682,8 @@ function StepResults({data,onBack,onHome}){
         <h3>Desbloquea el informe completo</h3>
         <p>Obtén el desglose detallado por metodología, Quality Score por cada factor, hipótesis del DCF y descarga tu informe en PDF.</p>
         <div className="paywall-btns">
-          <button className="pw-btn pw-btn-p" onClick={()=>{setPlan("essential");planRef.current="essential";}}>Informe Esencial · 149€ + IVA</button>
-          <button className="pw-btn pw-btn-o" onClick={()=>{setPlan("professional");planRef.current="professional";}}>Informe Profesional · 299€ + IVA</button>
+          <button className="pw-btn pw-btn-p" onClick={()=>{setPlan("essential");planRef.current="essential";saveToGoogleSheets(data,"essential");}}>Informe Esencial · 149€ + IVA</button>
+          <button className="pw-btn pw-btn-o" onClick={()=>{setPlan("professional");planRef.current="professional";saveToGoogleSheets(data,"professional");}}>Informe Profesional · 299€ + IVA</button>
         </div>
         <p style={{fontSize:12,color:"var(--ink3)",marginTop:14}}>De momento, el pago no está activado. Haz clic para previsualizar el informe.</p>
       </div>
@@ -752,8 +797,7 @@ function StepResults({data,onBack,onHome}){
         <div style={{display:"flex",justifyContent:"center",gap:20,flexWrap:"wrap",marginBottom:20,fontSize:14,color:"rgba(255,255,255,0.75)"}}>
           <span>✓ Análisis de sensibilidad</span><span>✓ Benchmarking sectorial</span><span>✓ Recomendaciones de valor</span><span>✓ Nota del analista</span>
         </div>
-        <button className="pw-btn pw-btn-p" style={{fontSize:16,padding:"13px 32px",background:"#fff",color:"var(--navy)",fontWeight:700}} onClick={()=>{setPlan("professional");planRef.current="professional";}}>
-          Upgrade por solo 150€ + IVA →
+        <button className="pw-btn pw-btn-p" style={{fontSize:16,padding:"13px 32px",background:"#fff",color:"var(--navy)",fontWeight:700}} onClick={()=>{setPlan("professional");planRef.current="professional";saveToGoogleSheets(data,"professional_upgrade");}}>Upgrade por solo 150€ + IVA →
         </button>
         <p style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginTop:10}}>De momento el pago no está activado. Haz clic para previsualizar.</p>
       </div>
@@ -821,7 +865,7 @@ function ValuationApp({onHome}){
     if(step===3)return data.contactEmail&&data.contactEmail.includes("@");
     return false;
   };
-  const go=(dir)=>{setStep(s=>s+dir);setTimeout(()=>{window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0},50)};
+  const go=(dir)=>{const ns=step+dir;if(ns===4&&dir===1){saveToGoogleSheets(data,'free')}setStep(s=>s+dir);setTimeout(()=>{window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0},50)};
   return<div className="app-overlay"><div ref={topRef}/>
     <div className="app-hdr"><div className="app-hdr-inner"><div className="app-hdr-left"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span className="app-hdr-title">Herramienta de valoración</span></div><div className="app-hdr-right">Paso {step+1} de {APP_STEPS.length} · <strong>{APP_STEPS[step].label}</strong></div></div><div className="app-hdr-prog"><div className="app-hdr-bar" style={{width:`${((step+1)/APP_STEPS.length)*100}%`}}/></div></div>
     <div className="app-main">

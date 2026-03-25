@@ -8,7 +8,7 @@ body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:v
 .nav-links{display:flex;align-items:center;gap:28px}
 .nav-lk{font-size:15px;color:var(--ink2);text-decoration:none;font-weight:500;cursor:pointer;background:none;border:none;font-family:inherit;padding:0}.nav-lk:hover{color:var(--ink)}
 .nav-cta{padding:10px 22px;background:var(--blue);color:#fff;border-radius:var(--rs);font-size:15px;font-weight:600;border:none;cursor:pointer;font-family:inherit;transition:all .2s}.nav-cta:hover{background:var(--blue2)}
-@media(max-width:768px){.nav-lk{display:none}.nav{padding:0 16px;height:60px}}
+@media(max-width:768px){.nav-lk{display:none}.nav{padding:0 16px;height:60px}.nav-cta{padding:8px 14px;font-size:13px;white-space:nowrap}}
 
 .hero{padding:150px 32px 80px;text-align:center;position:relative;overflow:hidden}
 .hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(26,86,219,0.06) 0%,transparent 70%);pointer-events:none}
