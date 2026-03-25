@@ -362,7 +362,7 @@ async function saveToGoogleSheets(data, plan) {
     await fetch(SHEETS_URL, {
       method: "POST",
       mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "text/plain" },
       body: JSON.stringify({
         fecha: new Date().toISOString(),
         nombre: data.contactName || "",
