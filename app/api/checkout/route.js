@@ -1,0 +1,37 @@
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+const PRICES = {
+  essential:            "price_1TFDHdA71qtERkDtSc2oM8Ue",
+  professional:         "price_1TFDI4A71qtERkDtq2LDiPMa",
+  professional_upgrade: "price_UPGRADE_ID", // reemplazar con el Price ID del upgrade
+};
+
+export async function POST(req) {
+  try {
+    const { plan, email, name, empresa } = await req.json();
+
+    const priceId = PRICES[plan];
+    if (!priceId) {
+      return Response.json({ error: "Plan no válido" }, { status: 400 });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items: [{ price: priceId, quantity: 1 }],
+      customer_email: email || undefined,
+      metadata: { plan, empresa: empresa || "", name: name || "" },
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/?payment=success&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url:  `${process.env.NEXT_PUBLIC_BASE_URL}/?payment=cancelled`,
+      automatic_tax: { enabled: true },
+      invoice_creation: { enabled: true },
+      locale: "es",
+    });
+
+    return Response.json({ url: session.url });
+  } catch (err) {
+    console.error("Stripe error:", err);
+    return Response.json({ error: err.message }, { status: 500 });
+  }
+}

@@ -352,6 +352,32 @@ function SensibilityAnalysis({r}){
 }
 
 
+
+// ─── STRIPE CHECKOUT ─────────────────────────────────────
+async function initiateCheckout(plan, data) {
+  try {
+    saveToGoogleSheets(data, plan);
+    const res = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        plan,
+        email: data.contactEmail || "",
+        name:  data.contactName  || "",
+        empresa: data.name || "",
+      }),
+    });
+    const json = await res.json();
+    if (json.url) {
+      window.location.href = json.url;
+    } else {
+      alert("Error iniciando el pago: " + (json.error || "inténtalo de nuevo"));
+    }
+  } catch (e) {
+    alert("Error de conexión. Inténtalo de nuevo.");
+  }
+}
+
 // ─── GOOGLE SHEETS ───────────────────────────────────────
 async function saveToGoogleSheets(data, plan) {
   let SHEETS_URL = process.env.NEXT_PUBLIC_SHEETS_URL;
@@ -387,8 +413,9 @@ async function saveToGoogleSheets(data, plan) {
   }
 }
 
-function StepResults({data,onBack,onHome}){
+function StepResults({data,onBack,onHome,returnPlan}){
   const[plan,setPlan]=useState("free");const planRef=useRef("free");
+  useEffect(()=>{if(returnPlan){const p=returnPlan==="professional_upgrade"?"professional":returnPlan;setPlan(p);planRef.current=p;}},[returnPlan]);
   const[pdfLoading,setPdfLoading]=useState(false);
   const[companyAnalysis,setCompanyAnalysis]=useState(null);
   const[professionalAnalysis,setProfessionalAnalysis]=useState(null);
@@ -683,8 +710,8 @@ function StepResults({data,onBack,onHome}){
         <h3>Desbloquea el informe completo</h3>
         <p>Obtén el desglose detallado por metodología, Quality Score por cada factor, hipótesis del DCF y descarga tu informe en PDF.</p>
         <div className="paywall-btns">
-          <button className="pw-btn pw-btn-p" onClick={()=>{setPlan("essential");planRef.current="essential";saveToGoogleSheets(data,"essential");}}>Informe Esencial · 149€ + IVA</button>
-          <button className="pw-btn pw-btn-o" onClick={()=>{setPlan("professional");planRef.current="professional";saveToGoogleSheets(data,"professional");}}>Informe Profesional · 299€ + IVA</button>
+          <button className="pw-btn pw-btn-p" onClick={()=>initiateCheckout("essential",data)}>Informe Esencial · 149€ + IVA</button>
+          <button className="pw-btn pw-btn-o" onClick={()=>initiateCheckout("professional",data)}>Informe Profesional · 299€ + IVA</button>
         </div>
         <p style={{fontSize:12,color:"var(--ink3)",marginTop:14}}>De momento, el pago no está activado. Haz clic para previsualizar el informe.</p>
       </div>
@@ -798,7 +825,7 @@ function StepResults({data,onBack,onHome}){
         <div style={{display:"flex",justifyContent:"center",gap:20,flexWrap:"wrap",marginBottom:20,fontSize:14,color:"rgba(255,255,255,0.75)"}}>
           <span>✓ Análisis de sensibilidad</span><span>✓ Benchmarking sectorial</span><span>✓ Recomendaciones de valor</span><span>✓ Nota del analista</span>
         </div>
-        <button className="pw-btn pw-btn-p" style={{fontSize:16,padding:"13px 32px",background:"#fff",color:"var(--navy)",fontWeight:700}} onClick={()=>{setPlan("professional");planRef.current="professional";saveToGoogleSheets(data,"professional_upgrade");}}>Upgrade por solo 150€ + IVA →
+        <button className="pw-btn pw-btn-p" style={{fontSize:16,padding:"13px 32px",background:"#fff",color:"var(--navy)",fontWeight:700}} onClick={()=>initiateCheckout("professional_upgrade",data)}>Upgrade por solo 150€ + IVA →
         </button>
         <p style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginTop:10}}>De momento el pago no está activado. Haz clic para previsualizar.</p>
       </div>
@@ -856,8 +883,8 @@ function StepResults({data,onBack,onHome}){
 }
 
 // ─── APP WRAPPER ─────────────────────────────────────────────
-function ValuationApp({onHome}){
-  const[step,setStep]=useState(0);const[data,setData]=useState({qualAnswers:{}});const topRef=useRef(null);
+function ValuationApp({onHome,returnPlan}){
+  const[step,setStep]=useState(0);const[data,setData]=useState({qualAnswers:{}});const topRef=useRef(null);useEffect(()=>{if(returnPlan){setStep(4)}},[returnPlan]);
   const onChange=(k,v)=>setData(d=>({...d,[k]:v}));
   const canNext=()=>{
     if(step===0)return data.sector;
@@ -874,7 +901,7 @@ function ValuationApp({onHome}){
       {step===1&&<StepFinancials data={data} onChange={onChange}/>}
       {step===2&&<StepQualitative data={data} onChange={onChange}/>}
       {step===3&&<StepEmail data={data} onChange={onChange}/>}
-      {step===4&&<StepResults data={data} onBack={()=>go(-1)} onHome={onHome}/>}
+      {step===4&&<StepResults data={data} onBack={()=>go(-1)} onHome={onHome} returnPlan={returnPlan}/>}
       {step<4&&<div className="btn-row">{step>0?<button className="btn btn-g" onClick={()=>go(-1)}>← Atrás</button>:<button className="btn btn-g" onClick={onHome}>← Volver al inicio</button>}<button className="btn btn-p" disabled={!canNext()} onClick={()=>go(1)}>{step===3?"Ver mi valoración →":step===2?"Siguiente →":"Siguiente →"}</button></div>}
     </div>
   </div>
@@ -1002,6 +1029,21 @@ function LegalNotice({onHome}){
 // ─── MAIN ────────────────────────────────────────────────────
 export default function App(){
   const[view,setView]=useState("landing");const pricingRef=useRef(null);
+  const[returnPlan,setReturnPlan]=useState(null);
+  useEffect(()=>{
+    const p=new URLSearchParams(window.location.search);
+    const payment=p.get("payment");
+    const plan=p.get("plan");
+    if(payment==="success"&&plan){
+      setReturnPlan(plan);
+      setView("app");
+      window.history.replaceState({},"","/");
+      window.scrollTo({top:0,behavior:"smooth"});
+    }
+    if(payment==="cancelled"){
+      window.history.replaceState({},"","/");
+    }
+  },[]);
   const handleStart=()=>{setView("app");window.scrollTo({top:0,behavior:"smooth"})};
   const handleHome=()=>{setView("landing");window.scrollTo({top:0,behavior:"smooth"})};
   const scrollTo=(id)=>{if(view!=="landing"){setView("landing");setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:"smooth"}),100)}else document.getElementById(id)?.scrollIntoView({behavior:"smooth"})};
@@ -1012,6 +1054,6 @@ export default function App(){
     {view==="landing"?<><LandingPage onStart={handleStart} scrollToRef={pricingRef}/><footer className="footer"><div style={{marginBottom:6}}><span style={{fontWeight:800,color:"var(--ink)"}}>valora<span style={{color:"var(--blue)"}}>tuempresa</span>.es</span></div>© 2026 SP Financial Advisory LLC · <a href="#" onClick={e=>{e.preventDefault();goPrivacy()}}>Política de privacidad</a> · <a href="#" onClick={e=>{e.preventDefault();goLegal()}}>Aviso legal</a></footer></>
     :view==="privacy"?<PrivacyPolicy onHome={handleHome}/>
     :view==="legal"?<LegalNotice onHome={handleHome}/>
-    :<ValuationApp onHome={handleHome}/>}
+    :<ValuationApp onHome={handleHome} returnPlan={returnPlan}/>}
   </>
 }
