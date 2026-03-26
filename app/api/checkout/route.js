@@ -5,7 +5,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const PRICES = {
   essential:            "price_1TFDHdA71qtERkDtSc2oM8Ue",
   professional:         "price_1TFDI4A71qtERkDtq2LDiPMa",
-  professional_upgrade: "price_UPGRADE_ID", // reemplazar con el Price ID del upgrade
+  professional_upgrade: "price_1TFDM2A71qtERkDtfvea7Fv3",
 };
 
 export async function POST(req) {
@@ -19,6 +19,7 @@ export async function POST(req) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
       customer_email: email || undefined,
       metadata: { plan, empresa: empresa || "", name: name || "" },
