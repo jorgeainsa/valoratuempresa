@@ -369,6 +369,7 @@ async function initiateCheckout(plan, data) {
     });
     const json = await res.json();
     if (json.url) {
+      sessionStorage.setItem("vte_data", JSON.stringify(data));
       window.location.href = json.url;
     } else {
       alert("Error iniciando el pago: " + (json.error || "inténtalo de nuevo"));
@@ -884,7 +885,14 @@ function StepResults({data,onBack,onHome,returnPlan}){
 
 // ─── APP WRAPPER ─────────────────────────────────────────────
 function ValuationApp({onHome,returnPlan}){
-  const[step,setStep]=useState(0);const[data,setData]=useState({qualAnswers:{}});const topRef=useRef(null);useEffect(()=>{if(returnPlan){setStep(4)}},[returnPlan]);
+  const[step,setStep]=useState(0);
+  const[data,setData]=useState(()=>{
+    if(typeof window!=="undefined"&&window.sessionStorage){
+      try{const s=sessionStorage.getItem("vte_data");if(s){const d=JSON.parse(s);sessionStorage.removeItem("vte_data");return d;}}catch(e){}
+    }
+    return{qualAnswers:{}};
+  });
+  const topRef=useRef(null);useEffect(()=>{if(returnPlan){setStep(4)}},[returnPlan]);
   const onChange=(k,v)=>setData(d=>({...d,[k]:v}));
   const canNext=()=>{
     if(step===0)return data.sector;
