@@ -33,7 +33,7 @@ export default function CookieBanner() {
         lineHeight: 1.5, flex: "1 1 300px", maxWidth: 680,
       }}>
         Usamos cookies propias y de terceros (Google Analytics, Stripe) para analizar el uso del sitio y procesar pagos de forma segura.{" "}
-        <a href="#" onClick={e => { e.preventDefault(); }} style={{ color: "#60a5fa", textDecoration: "underline" }}>
+        <a href="#" onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent("vte:navigate", { detail: "privacy" })); }} style={{ color: "#60a5fa", textDecoration: "underline" }}>
           Política de cookies
         </a>
       </p>

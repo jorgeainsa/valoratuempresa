@@ -1056,6 +1056,7 @@ export default function App(){
   const handleHome=()=>{setView("landing");window.scrollTo({top:0,behavior:"smooth"})};
   const scrollTo=(id)=>{if(view!=="landing"){setView("landing");setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:"smooth"}),100)}else document.getElementById(id)?.scrollIntoView({behavior:"smooth"})};
   const goPrivacy=()=>{setView("privacy");window.scrollTo({top:0,behavior:"smooth"})};
+  useEffect(()=>{const h=e=>{if(e.detail==="privacy")goPrivacy();if(e.detail==="legal")goLegal();};window.addEventListener("vte:navigate",h);return()=>window.removeEventListener("vte:navigate",h);},[]);
   const goLegal=()=>{setView("legal");window.scrollTo({top:0,behavior:"smooth"})};
   return<>
     <nav className="nav"><a className="nav-logo" onClick={handleHome}>valora<span>tuempresa</span>.es</a><div className="nav-links">{view==="landing"&&<><button className="nav-lk" onClick={()=>scrollTo("situaciones")}>Situaciones frecuentes</button><button className="nav-lk" onClick={()=>scrollTo("como")}>Cómo funciona</button><button className="nav-lk" onClick={()=>scrollTo("precios")}>Precios</button><button className="nav-lk" onClick={()=>scrollTo("faq")}>FAQ</button></>}<button className="nav-cta" onClick={handleStart}>Valorar mi empresa</button></div></nav>
