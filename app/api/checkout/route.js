@@ -3,9 +3,9 @@ import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const PRICES = {
-  essential:            "price_1TFDHdA71qtERkDtSc2oM8Ue",
-  professional:         "price_1TFDI4A71qtERkDtq2LDiPMa",
-  professional_upgrade: "price_1TFDM2A71qtERkDtfvea7Fv3",
+  essential:            process.env.STRIPE_PRICE_ESSENTIAL,
+  professional:         process.env.STRIPE_PRICE_PROFESSIONAL,
+  professional_upgrade: process.env.STRIPE_PRICE_UPGRADE,
 };
 
 export async function POST(req) {
