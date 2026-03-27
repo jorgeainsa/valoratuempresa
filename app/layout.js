@@ -1,4 +1,5 @@
 import './globals.css';
+import CookieBanner from './CookieBanner';
 
 export const metadata = {
   title: 'valoratuempresa.es | Valoración de empresas online desde 149€',
@@ -20,7 +21,10 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        {children}
+        <CookieBanner />
+      </body>
     </html>
   );
 }
