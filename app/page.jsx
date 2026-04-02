@@ -103,6 +103,22 @@ function EuroInput({value,onChange,placeholder,helper}){
   return<div style={{position:"relative"}}><input type="text" inputMode="numeric" placeholder={placeholder} value={display} onChange={e=>{onChange(e.target.value.replace(/[^0-9]/g,""))}} style={{paddingRight:32}}/><span style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",fontSize:14,color:"var(--ink3)",fontWeight:600,pointerEvents:"none"}}>€</span></div>
 }
 
+function StickyCtaBanner({onStart}){
+  const[vis,setVis]=useState(false);
+  useEffect(()=>{
+    const onScroll=()=>setVis(window.scrollY>600);
+    window.addEventListener("scroll",onScroll,{passive:true});
+    return()=>window.removeEventListener("scroll",onScroll);
+  },[]);
+  return<div className={`sticky-cta ${vis?"vis":""}`}>
+    <div className="sticky-cta-left">
+      <div className="sticky-cta-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg></div>
+      <div><div className="sticky-cta-text">Valora tu empresa hoy</div><div className="sticky-cta-sub">Registro gratuito · Sin compromiso · Resultado inmediato</div></div>
+    </div>
+    <button className="sticky-cta-btn" onClick={onStart}>Obtener valoración →</button>
+  </div>
+}
+
 // ─── LANDING ─────────────────────────────────────────────────
 function LandingPage({onStart,scrollToRef}){
   const scrollTo=(id)=>document.getElementById(id)?.scrollIntoView({behavior:"smooth"});
@@ -125,6 +141,7 @@ function LandingPage({onStart,scrollToRef}){
     <section className="sec-fw"><div className="sec-fw-inner"><Anim><div className="sec-l" style={{textAlign:"center"}}>Testimonios</div><h2 className="sec-t" style={{textAlign:"center"}}>Lo que dicen nuestros clientes</h2><p className="sec-sub" style={{textAlign:"center",margin:"0 auto 44px"}}>Empresarios y asesores que ya han utilizado nuestro servicio.</p></Anim><Anim><div className="tgrid">{TESTIMONIALS.map((t,i)=><div className="tcard" key={i}><div className="t-stars">★★★★★</div><div className="t-text">&ldquo;{t.text}&rdquo;</div><div className="t-auth">{t.author}</div><div className="t-role">{t.role}</div></div>)}</div></Anim></div></section>
     <section className="sec sec-c" id="faq"><Anim><div className="sec-l">Preguntas frecuentes</div><h2 className="sec-t">¿Tienes dudas?</h2><p className="sec-sub">Las respuestas a las preguntas que más nos hacen.</p></Anim><Anim><div className="faq-list">{FAQS.map((f,i)=><FAQ key={i} item={f}/>)}</div></Anim></section>
     <Anim><div className="cta-ban"><h2>¿Listo para saber cuánto vale tu empresa?</h2><p>Empieza gratis y obtén una estimación en menos de 15 minutos.</p><button className="cta-btn2" onClick={onStart}>Obtener mi valoración →</button></div></Anim>
+    <StickyCtaBanner onStart={onStart}/>
   </>
 }
 
